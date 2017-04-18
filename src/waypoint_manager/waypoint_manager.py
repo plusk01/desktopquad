@@ -4,7 +4,7 @@ import rospy
 import time
 from fcu_common.msg import Command
 from nav_msgs.msg import Odometry
-from ros_copter.srv import AddWaypoint, RemoveWaypoint, SetWaypointsFromFile
+from desktopquad.srv import AddWaypoint, RemoveWaypoint, SetWaypointsFromFile
 import yaml
 import tf
 import numpy as np

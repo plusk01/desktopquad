@@ -50,7 +50,6 @@ add_dependencies(desktopquad fcu_common_generate_messages_cpp)
 target_link_libraries(desktopquad ${catkin_LIBRARIES})
 set_target_properties(desktopquad PROPERTIES LINKER_LANGUAGE CXX)
 
-
 ## Declare cpp executables
 add_executable(controller
   src/controller/controller_node.cpp
