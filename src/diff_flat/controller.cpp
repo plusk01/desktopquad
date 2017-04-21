@@ -1,8 +1,7 @@
 #include <diff_flat/controller.h>
 #include <stdio.h>
 
-namespace diff_flat
-{
+namespace diff_flat {
 
 Controller::Controller() :
   nh_(ros::NodeHandle()),
@@ -33,14 +32,16 @@ Controller::Controller() :
   cmd_sub_ = nh_.subscribe("high_level_command", 1, &Controller::cmdCallback, this);
 
   command_pub_ = nh_.advertise<fcu_common::Command>("command", 1);
+
+  dims_.n = 7;
+  dims_.p = 4;
+  dims_.q = 4;
 }
 
 
-void Controller::stateCallback(const nav_msgs::OdometryConstPtr &msg)
-{
+void Controller::stateCallback(const nav_msgs::OdometryConstPtr &msg) {
   static double prev_time = 0;
-  if(prev_time == 0)
-  {
+  if(prev_time == 0) {
     prev_time = msg->header.stamp.toSec();
     return;
   }
@@ -73,29 +74,24 @@ void Controller::stateCallback(const nav_msgs::OdometryConstPtr &msg)
   xhat_.q = msg->twist.twist.angular.y;
   xhat_.r = msg->twist.twist.angular.z;
 
-  if(is_flying_)
-  {
+  if(is_flying_) {
     computeControl(dt);
     publishCommand();
-  }
-  else
-  {
+  } else {
     resetIntegrators();
     prev_time_ = msg->header.stamp.toSec();
   }
-  }
+}
 
 
-void Controller::isFlyingCallback(const std_msgs::BoolConstPtr &msg)
-{
+void Controller::isFlyingCallback(const std_msgs::BoolConstPtr &msg) {
   is_flying_ = msg->data;
 }
 
 
-void Controller::cmdCallback(const fcu_common::CommandConstPtr &msg)
-{
+void Controller::cmdCallback(const fcu_common::CommandConstPtr &msg) {
   switch(msg->mode)
-  {
+ {
     case fcu_common::Command::MODE_XPOS_YPOS_YAW_ALTITUDE:
       xc_.pn = msg->x;
       xc_.pe = msg->y;
@@ -124,44 +120,7 @@ void Controller::cmdCallback(const fcu_common::CommandConstPtr &msg)
 }
 
 
-void Controller::reconfigure_callback(ros_copter::ControllerConfig &config, uint32_t level)
-{
-  double P, I, D, tau;
-  tau = config.tau;
-  P = config.u_P;
-  I = config.u_I;
-  D = config.u_D;
-  PID_u_.setGains(P, I, D, tau);
-
-  P = config.v_P;
-  I = config.v_I;
-  D = config.v_D;
-  PID_v_.setGains(P, I, D, tau);
-
-  P = config.w_P;
-  I = config.w_I;
-  D = config.w_D;
-  PID_w_.setGains(P, I, D, tau);
-
-  P = config.x_P;
-  I = config.x_I;
-  D = config.x_D;
-  PID_x_.setGains(P, I, D, tau);
-
-  P = config.y_P;
-  I = config.y_I;
-  D = config.y_D;
-  PID_y_.setGains(P, I, D, tau);
-
-  P = config.z_P;
-  I = config.z_I;
-  D = config.z_D;
-  PID_z_.setGains(P, I, D, tau);
-
-  P = config.psi_P;
-  I = config.psi_I;
-  D = config.psi_D;
-  PID_psi_.setGains(P, I, D, tau);
+void Controller::reconfigure_callback(ros_copter::ControllerConfig &config, uint32_t level) {
 
   max_.roll = config.max_roll;
   max_.pitch = config.max_pitch;
@@ -177,10 +136,8 @@ void Controller::reconfigure_callback(ros_copter::ControllerConfig &config, uint
 }
 
 
-void Controller::computeControl(double dt)
-{
-  if(dt <= 0.0000001)
-  {
+void Controller::computeControl(double dt) {
+  if(dt <= 0.0000001) {
     // This messes up the derivative calculation in the PID controllers
     return;
   }
@@ -188,7 +145,52 @@ void Controller::computeControl(double dt)
   uint8_t mode_flag = control_mode_;
 
   if(mode_flag == fcu_common::Command::MODE_XPOS_YPOS_YAW_ALTITUDE) {
-    
+
+    // --------------------------------
+    // Manage setpoint to create proper
+    // feedforward and reference state
+    // --------------------------------
+
+    // build the reference vector: r = [pn pe pd psi]
+    Eigen::VectorXd r;
+    r << xc_.pn, xc_.pe, xc_.pd, xc_.psi;
+
+    Eigen::VectorXd x_r = Eigen::VectorXd::Zero(dims_.n, 1);
+    Eigen::VectorXd u_r = Eigen::VectorXd::Zero(dims_.p, 1);
+
+    // Find the equilibrium state: xr = [pn pe pd pndot pedot pddot psi]
+    x_r = lqr_gains_.F*r;
+
+    // Find the equilibrium input: ur = [pnddot peddot pdddot psidot]
+    Eigen::VectorXd gvec; gvec << 0, 0, 0, 9.81, 0;
+    u_r = lqr_gains_.N*r - gvec;
+
+    // --------------------------------
+    // Linear-Quadratic Regulator (LQR)
+    // --------------------------------
+
+    // Create state vector used by LQR
+    Eigen::VectorXd x_lqr;
+    x_lqr << xhat_.pn, xhat_.pe, xhat_.pd, xhat_.u, xhat_.v, xhat_.w, xhat_.psi;
+    // Note: u, v, w should be rotated into the inertial frame. But since this
+    // is just a setpoint controller (going to positions with ending vel = 0)
+    // it actually doesn't matter because we want LQR to regulate them to 0.
+
+    // Form error-state to regulate to zero: x_tilde = x - x_r
+    Eigen::VectorXd x_tilde = x_lqr - x_r;
+
+    // LQR Feedback Control Law
+    Eigen::VectorXd u_tilde = -lqr_gains_.K*x_tilde;
+
+    // Add feedforward input term
+    Eigen::VectorXd u = u_tilde + u_r;
+
+    // --------------------------------
+    // Nonlinear mapping from u to nu
+    // --------------------------------
+
+    // Our LQR controller gives outputs as u = [pnddot peddot pdddot psidot]
+
   }
 
 
@@ -202,30 +204,21 @@ void Controller::computeControl(double dt)
   }
 }
 
-void Controller::publishCommand()
-{
+void Controller::publishCommand() {
   command_pub_.publish(command_);
 }
 
-void Controller::resetIntegrators()
-{
-  PID_u_.clearIntegrator();
-  PID_v_.clearIntegrator();
-  PID_x_.clearIntegrator();
-  PID_y_.clearIntegrator();
-  PID_z_.clearIntegrator();
-  PID_psi_.clearIntegrator();
+void Controller::resetIntegrators() {
+
 }
 
-double Controller::saturate(double x, double max, double min)
-{
+double Controller::saturate(double x, double max, double min) {
   x = (x > max) ? max : x;
   x = (x < min) ? min : x;
   return x;
 }
 
-double Controller::sgn(double x)
-{
+double Controller::sgn(double x) {
   return (x >= 0.0) ? 1.0 : -1.0;
 }
 

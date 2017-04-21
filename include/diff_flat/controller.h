@@ -8,13 +8,12 @@
 #include <tf/tf.h>
 #include <stdint.h>
 #include <dynamic_reconfigure/server.h>
+#include <Eigen/Dense>
 #include <desktopquad/ControllerConfig.h>
 
-namespace diff_flat
-{
+namespace diff_flat {
 
-typedef struct
-{
+typedef struct {
   double pn;
   double pe;
   double pd;
@@ -38,8 +37,7 @@ typedef struct
   double throttle;
 } state_t;
 
-typedef struct
-{
+typedef struct {
   double roll;
   double pitch;
   double yaw_rate;
@@ -49,8 +47,24 @@ typedef struct
   double w;
 } max_t;
 
-class Controller
-{
+typedef struct {
+  double n; // state vector size
+  double p; // input/control vector size
+  double q; // output vector size
+
+  // A \in R^{n x n}
+  // B \in R^{n x p}
+  // C \in R^{q x n}
+  // D \in R^{q x p}
+} dims_t;
+
+typedef struct {
+  double F;
+  double N;
+  double K;
+} lqr_gains_t;
+
+class Controller {
 
 public:
 
@@ -76,15 +90,6 @@ private:
   double drag_constant_;
   bool is_flying_;
 
-  // PID Controllers
-  fcu_common::SimplePID PID_u_;
-  fcu_common::SimplePID PID_v_;
-  fcu_common::SimplePID PID_w_;
-  fcu_common::SimplePID PID_x_;
-  fcu_common::SimplePID PID_y_;
-  fcu_common::SimplePID PID_z_;
-  fcu_common::SimplePID PID_psi_;
-
   // Dynamic Reconfigure Hooks
   dynamic_reconfigure::Server<ros_copter::ControllerConfig> _server;
   dynamic_reconfigure::Server<ros_copter::ControllerConfig>::CallbackType _func;
@@ -97,6 +102,8 @@ private:
   state_t xc_ = {}; // command
   double prev_time_;
   uint8_t control_mode_;
+  dims_t dims_ = {}; // dimensions of the system
+  lqr_gains_t lqr_gains_ = {};
 
   // Functions
   void stateCallback(const nav_msgs::OdometryConstPtr &msg);
