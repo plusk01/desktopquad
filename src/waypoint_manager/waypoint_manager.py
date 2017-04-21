@@ -4,6 +4,7 @@ import rospy
 import time
 from fcu_common.msg import Command
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Header
 from desktopquad.srv import AddWaypoint, RemoveWaypoint, SetWaypointsFromFile
 import yaml
 import tf
@@ -54,6 +55,10 @@ class WaypointManager():
             delta = next_point - current_waypoint
             command_msg.z = math.atan2(delta[1], delta[0])
         command_msg.mode = Command.MODE_XPOS_YPOS_YAW_ALTITUDE
+
+        command_msg.header = Header()
+        command_msg.header.stamp = rospy.Time.now()
+
         self.waypoint_pub_.publish(command_msg)
 
         while not rospy.is_shutdown():
@@ -100,6 +105,10 @@ class WaypointManager():
                 delta = next_point - current_waypoint
                 command_msg.z = math.atan2(delta[1], delta[0])
             command_msg.mode = Command.MODE_XPOS_YPOS_YAW_ALTITUDE
+
+            command_msg.header = Header()
+            command_msg.header.stamp = rospy.Time.now()
+
             self.waypoint_pub_.publish(command_msg)
 
 if __name__ == '__main__':
