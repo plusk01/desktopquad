@@ -219,7 +219,7 @@ void Controller::computeControl(double dt) {
     double phi_d = asin(-w(1));
 
     // Ferrin eq 22
-    double theta_d = atan(-w(0) / w(2));
+    double theta_d = atan(w(0) / w(2));
 
     // Ferrin eq 23, but rederived and corrected based on eq 11
     double r_d = upsi*cos(xhat_.theta)/cos(xhat_.phi) - xhat_.q*tan(xhat_.phi);
