@@ -87,9 +87,9 @@ private:
   fcu_common::SimplePID PID_psi_;
 
   // Dynamic Reconfigure Hooks
-  dynamic_reconfigure::Server<ros_copter::ControllerConfig> _server;
-  dynamic_reconfigure::Server<ros_copter::ControllerConfig>::CallbackType _func;
-  void reconfigure_callback(ros_copter::ControllerConfig &config, uint32_t level);
+  dynamic_reconfigure::Server<desktopquad::ControllerConfig> _server;
+  dynamic_reconfigure::Server<desktopquad::ControllerConfig>::CallbackType _func;
+  void reconfigure_callback(desktopquad::ControllerConfig &config, uint32_t level);
 
   // Memory for sharing information between functions
   state_t xhat_ = {}; // estimate

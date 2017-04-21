@@ -118,13 +118,13 @@ void Controller::cmdCallback(const fcu_common::CommandConstPtr &msg)
       control_mode_ = msg->mode;
       break;
     default:
-      ROS_ERROR("ros_copter/controller: Unhandled command message of type %d", msg->mode);
+      ROS_ERROR("desktopquad/controller: Unhandled command message of type %d", msg->mode);
       break;
   }
 }
 
 
-void Controller::reconfigure_callback(ros_copter::ControllerConfig &config, uint32_t level)
+void Controller::reconfigure_callback(desktopquad::ControllerConfig &config, uint32_t level)
 {
   double P, I, D, tau;
   tau = config.tau;

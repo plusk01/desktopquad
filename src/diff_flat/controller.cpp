@@ -1,6 +1,11 @@
 #include <diff_flat/controller.h>
 #include <stdio.h>
 
+// Based on:
+// "Path Planning and Control Utilizing Differential Flatness of Rotorcraft," and corrected version
+// "Differential flatness based control of a rotorcraft for aggressive maneuvers"
+// Ferrin, Leishman 2011
+
 namespace diff_flat {
 
 Controller::Controller() :
@@ -36,6 +41,28 @@ Controller::Controller() :
   dims_.n = 7;
   dims_.p = 4;
   dims_.q = 4;
+
+  lqr_gains_.F = Eigen::MatrixXd::Zero(dims_.n, dims_.p);
+  lqr_gains_.N = Eigen::MatrixXd::Zero(dims_.p, dims_.p);
+  lqr_gains_.K = Eigen::MatrixXd::Zero(dims_.p, dims_.n);
+
+  lqr_gains_.F << 1, 0, 0, 0,
+                  0, 1, 0, 0,
+                  0, 0, 1, 0,
+                  0, 0, 0, 0,
+                  0, 0, 0, 0,
+                  0, 0, 0, 0,
+                  0, 0, 0, 1;
+
+  lqr_gains_.N << 0, 0, 0, 0,
+                  0, 0, 0, 0,
+                  0, 0, 0, 0,
+                  0, 0, 0, 0;
+
+  lqr_gains_.K << 0.316227766016838, 0, 0, 0.795270728767051, 0, 0, 0,
+                  0, 0.316227766016838, 0, 0, 0.795270728767051, 0, 0,
+                  0, 0, 0.316227766016838, 0, 0, 0.795270728767051, 0,
+                  0, 0, 0, 0, 0, 0,                 0.316227766016838;
 }
 
 
@@ -90,8 +117,7 @@ void Controller::isFlyingCallback(const std_msgs::BoolConstPtr &msg) {
 
 
 void Controller::cmdCallback(const fcu_common::CommandConstPtr &msg) {
-  switch(msg->mode)
- {
+  switch(msg->mode) {
     case fcu_common::Command::MODE_XPOS_YPOS_YAW_ALTITUDE:
       xc_.pn = msg->x;
       xc_.pe = msg->y;
@@ -99,28 +125,14 @@ void Controller::cmdCallback(const fcu_common::CommandConstPtr &msg) {
       xc_.psi = msg->z;
       control_mode_ = msg->mode;
       break;
-    case fcu_common::Command::MODE_XVEL_YVEL_YAWRATE_ALTITUDE:
-      xc_.u = msg->x;
-      xc_.v = msg->y;
-      xc_.pd = msg->F;
-      xc_.r = msg->z;
-      control_mode_ = msg->mode;
-      break;
-    case fcu_common::Command::MODE_XACC_YACC_YAWRATE_AZ:
-      xc_.ax = msg->x;
-      xc_.ay = msg->y;
-      xc_.az = msg->F;
-      xc_.r = msg->z;
-      control_mode_ = msg->mode;
-      break;
     default:
-      ROS_ERROR("ros_copter/controller: Unhandled command message of type %d", msg->mode);
+      ROS_ERROR("desktopquad/diff_flat: Unhandled command message of type %d", msg->mode);
       break;
   }
 }
 
 
-void Controller::reconfigure_callback(ros_copter::ControllerConfig &config, uint32_t level) {
+void Controller::reconfigure_callback(desktopquad::ControllerConfig &config, uint32_t level) {
 
   max_.roll = config.max_roll;
   max_.pitch = config.max_pitch;
@@ -152,7 +164,7 @@ void Controller::computeControl(double dt) {
     // --------------------------------
 
     // build the reference vector: r = [pn pe pd psi]
-    Eigen::VectorXd r;
+    Eigen::VectorXd r(dims_.p);
     r << xc_.pn, xc_.pe, xc_.pd, xc_.psi;
 
     Eigen::VectorXd x_r = Eigen::VectorXd::Zero(dims_.n, 1);
@@ -162,7 +174,7 @@ void Controller::computeControl(double dt) {
     x_r = lqr_gains_.F*r;
 
     // Find the equilibrium input: ur = [pnddot peddot pdddot psidot]
-    Eigen::VectorXd gvec; gvec << 0, 0, 0, 9.81, 0;
+    Eigen::VectorXd gvec(dims_.p); gvec << 0, 0, 9.81, 0;
     u_r = lqr_gains_.N*r - gvec;
 
     // --------------------------------
@@ -170,7 +182,7 @@ void Controller::computeControl(double dt) {
     // --------------------------------
 
     // Create state vector used by LQR
-    Eigen::VectorXd x_lqr;
+    Eigen::VectorXd x_lqr(dims_.n);
     x_lqr << xhat_.pn, xhat_.pe, xhat_.pd, xhat_.u, xhat_.v, xhat_.w, xhat_.psi;
     // Note: u, v, w should be rotated into the inertial frame. But since this
     // is just a setpoint controller (going to positions with ending vel = 0)
@@ -189,18 +201,35 @@ void Controller::computeControl(double dt) {
     // Nonlinear mapping from u to nu
     // --------------------------------
 
+    // for convenience
+    Eigen::VectorXd up = u.block(0,0,3,1);
+    double upsi        = u(3);
+
     // Our LQR controller gives outputs as u = [pnddot peddot pdddot psidot]
+    // but the quadrotor's autopilot attitude controller takes inputs
+    // as nu = [T phi theta r]. We invert the dynamics to create a mapping.
 
-  }
+    // Ferrin eq 18
+    double T_d = mass_*up.norm();
 
+    // Ferrin eq 20
+    Eigen::VectorXd w = -rot_psi(xhat_.psi)*up*(mass_/T_d);
 
-  if(mode_flag == fcu_common::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE) {
-    // Pack up and send the command
+    // Ferrin eq 21
+    double phi_d = asin(-w(1));
+
+    // Ferrin eq 22
+    double theta_d = atan(-w(0) / w(2));
+
+    // Ferrin eq 23, but rederived and corrected based on eq 11
+    double r_d = upsi*cos(xhat_.theta)/cos(xhat_.phi) - xhat_.q*tan(xhat_.phi);
+
+    // Pack up commands to send to the onboard attitude controller
     command_.mode = fcu_common::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE;
-    command_.F = saturate(xc_.throttle, max_.throttle, 0.0);
-    command_.x = saturate(xc_.phi, max_.roll, -max_.roll);
-    command_.y = saturate(xc_.theta, max_.pitch, -max_.pitch);
-    command_.z = saturate(xc_.r, max_.yaw_rate, -max_.yaw_rate);
+    command_.F = saturate(T_d/max_thrust_, max_.throttle, 0.0);
+    command_.x = saturate(phi_d, max_.roll, -max_.roll);
+    command_.y = saturate(theta_d, max_.pitch, -max_.pitch);
+    command_.z = saturate(r_d, max_.yaw_rate, -max_.yaw_rate);
   }
 }
 
@@ -220,6 +249,14 @@ double Controller::saturate(double x, double max, double min) {
 
 double Controller::sgn(double x) {
   return (x >= 0.0) ? 1.0 : -1.0;
+}
+
+Eigen::Matrix3d Controller::rot_psi(double psi) {
+  Eigen::Matrix3d rot;
+  rot << cos(psi), sin(psi), 0,
+        -sin(psi), cos(psi), 0,
+         0       , 0       , 1;
+  return rot;
 }
 
 } // namespace diff_flat

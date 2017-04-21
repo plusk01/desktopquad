@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 #include <ros/ros.h>
 #include <fcu_common/Command.h>
 #include <fcu_common/simple_pid.h>
@@ -48,9 +50,9 @@ typedef struct {
 } max_t;
 
 typedef struct {
-  double n; // state vector size
-  double p; // input/control vector size
-  double q; // output vector size
+  int n; // state vector size
+  int p; // input/control vector size
+  int q; // output vector size
 
   // A \in R^{n x n}
   // B \in R^{n x p}
@@ -59,9 +61,9 @@ typedef struct {
 } dims_t;
 
 typedef struct {
-  double F;
-  double N;
-  double K;
+  Eigen::MatrixXd F;
+  Eigen::MatrixXd N;
+  Eigen::MatrixXd K;
 } lqr_gains_t;
 
 class Controller {
@@ -91,9 +93,9 @@ private:
   bool is_flying_;
 
   // Dynamic Reconfigure Hooks
-  dynamic_reconfigure::Server<ros_copter::ControllerConfig> _server;
-  dynamic_reconfigure::Server<ros_copter::ControllerConfig>::CallbackType _func;
-  void reconfigure_callback(ros_copter::ControllerConfig &config, uint32_t level);
+  dynamic_reconfigure::Server<desktopquad::ControllerConfig> _server;
+  dynamic_reconfigure::Server<desktopquad::ControllerConfig>::CallbackType _func;
+  void reconfigure_callback(desktopquad::ControllerConfig &config, uint32_t level);
 
   // Memory for sharing information between functions
   state_t xhat_ = {}; // estimate
@@ -115,6 +117,7 @@ private:
   void publishCommand();
   double saturate(double x, double max, double min);
   double sgn(double x);
+  Eigen::Matrix3d rot_psi(double psi);
 };
 
 } // namespace diff_flat
