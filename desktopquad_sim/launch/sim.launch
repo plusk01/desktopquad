@@ -1,29 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- This is a launch file that runs the bare minimum requirements to get -->
-<!-- gazebo running.  It requires a relative_nav::Command on /command -->
-<!-- to move the hex, and outputs imu, altimeter, laserscan and RGBD images -->
-<!-- as well as a relative_nav::FilterState message on /global_state  -->
-<!-- a geometry_msgs::StampedTransform on /mocap to imitate motion capture -->
 <launch>
-  <arg name="world_file" default="platform.world"/>
+  <arg name="mav_name" default="chiny" />
 
-  <!-- Start Simulator -->
-  <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find desktopquad_sim)/worlds/$(arg world_file)"/>
-    <arg name="gui" value="true"/>
-    <arg name="paused" value="true"/>
-  </include>
-
-  <!-- Spawn the desktop quad -->
-  <include file="$(find desktopquad_sim)/launch/multirotor.launch">
-    <arg name="mav_name"            value="chiny"/>
-    <arg name="model_name"          value="chiny"/>
-    <arg name="enable_ground_truth" value="true" />
-    <arg name="color"               value="Black"/>
-    <arg name="x"                   value="0"/>
-    <arg name="y"                   value="0"/>
-    <arg name="z"                   value="0.015"/>
-    <arg name="yaw"                 value="-1.5708"/>
+  <!-- Start ROSflight SIL Gazebo Simulation -->
+  <include file="$(find rosflight_sim)/launch/base.launch">
+    <arg name="mav_name"      value="$(arg mav_name)"/>
+    <arg name="color"         value="black"/>
+    <arg name="x"             value="0"/>
+    <arg name="y"             value="0"/>
+    <arg name="z"             value="0.015"/>
+    <arg name="yaw"           value="-1.5708"/>
+    <arg name="paused"        value="true"/>
+    <arg name="gui"           value="true"/>
+    <arg name="verbose"       value="false"/>
+    <arg name="debug"         value="false"/>
+    <arg name="xacro_file"    value="$(find desktopquad_sim)/agents/chiny/chiny.xacro"/>
+    <arg name="param_file"    value="$(find rosflight_sim)/params/multirotor.yaml"/>
+    <arg name="world_file"    value="$(find desktopquad_sim)/worlds/platform.world"/>
   </include>
 
   <!-- plot using pyqtgraph (make sure simulator gui is turned off)-->
@@ -34,7 +27,43 @@
   <!-- Load Rviz to see the tf tree -->
   <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find desktopquad_sim)/rviz/quad.rviz" /> -->
 
-  <!-- Add frames to sim tf tree (chiny/truth) -->
-  <node pkg="desktopquad_sim" type="tf_sim_frames" name="tf_sim_frames" />
+
+  <group ns="$(arg mav_name)">
+
+    <!-- Is Flying Publisher -->
+    <node pkg="rostopic" type="rostopic" name="is_flying_pub" args="pub is_flying std_msgs/Bool true"/>
+
+    <!-- Add frames to sim tf tree (chiny/truth) -->
+    <node pkg="desktopquad_sim" type="tf_sim_frames" name="tf_sim_frames" />
+
+    <!-- Estimator -->
+    <!-- <rosparam command="load" file="$(find ros_copter)/params/mekf.yaml" ns="estimator"/>
+    <node name="estimator" pkg="ros_copter" type="mekf" output="screen">
+      <param name="euler_integration_steps" value="20"/>
+    </node>-->
+
+    <!-- ArUco Localization -->
+    <node name="aruco" pkg="aruco_localization" type="aruco_localization" output="screen">
+      <param name="show_output_video" value="true" />
+      <param name="markermap_config" value="$(find desktopquad_sim)/params/aruco_mip_36h12_markermap.yaml" />
+      <param name="marker_size" value="0.0298" />
+
+      <remap from="input_image" to="camera/rgb" />
+    </node>
+
+    <!-- PID Position Controller -->
+    <rosparam command="load" file="$(find desktopquad_sim)/agents/chiny/chiny_controller.yaml" ns="controller"/>
+    <node name="controller" pkg="desktopquad" type="diff_flat" output="screen">
+      <remap from="estimate" to="ground_truth/odometry"/>
+    </node>
+
+    <!-- Waypoint Manager -->
+    <node name="waypoint_manager" pkg="desktopquad" type="waypoint_manager.py" output="screen">
+      <rosparam command="load" file="$(find desktopquad_sim)/params/waypoints.yaml"/>
+      <remap from="waypoint" to="high_level_command"/>
+      <remap from="state" to="ground_truth/odometry"/>
+    </node>
+
+  </group>
 
 </launch>
