@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This is a launch file that runs the bare minimum requirements to get -->
+<!-- gazebo running.  It requires a relative_nav::Command on /command -->
+<!-- to move the hex, and outputs imu, altimeter, laserscan and RGBD images -->
+<!-- as well as a relative_nav::FilterState message on /global_state  -->
+<!-- a geometry_msgs::StampedTransform on /mocap to imitate motion capture -->
+<launch>
+  <arg name="world_file" default="platform.world"/>
+
+  <!-- Start Simulator -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find desktopquad_sim)/worlds/$(arg world_file)"/>
+    <arg name="gui" value="true"/>
+    <arg name="paused" value="true"/>
+  </include>
+
+  <!-- Spawn the desktop quad -->
+  <include file="$(find desktopquad_sim)/launch/multirotor.launch">
+    <arg name="mav_name"            value="chiny"/>
+    <arg name="model_name"          value="chiny"/>
+    <arg name="enable_ground_truth" value="true" />
+    <arg name="color"               value="Black"/>
+    <arg name="x"                   value="0"/>
+    <arg name="y"                   value="0"/>
+    <arg name="z"                   value="0.015"/>
+    <arg name="yaw"                 value="-1.5708"/>
+  </include>
+
+  <!-- plot using pyqtgraph (make sure simulator gui is turned off)-->
+<!--   <node pkg="desktopquad_sim" type="state_plotter.py" name="state_plotter" output="screen">
+    <param name="time_window" value="100.0"/>
+  </node> -->
+
+  <!-- Load Rviz to see the tf tree -->
+  <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find desktopquad_sim)/rviz/quad.rviz" /> -->
+
+  <!-- Add frames to sim tf tree (chiny/truth) -->
+  <node pkg="desktopquad_sim" type="tf_sim_frames" name="tf_sim_frames" />
+
+</launch>

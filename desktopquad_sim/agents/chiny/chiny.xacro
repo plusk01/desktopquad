@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<!--
+
+Gazebo Multirotor Definition File
+Author: James Jackson
+
+-->
+
+<robot name="chiny" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Properties -->
+  <xacro:property name="namespace" value="chiny" />
+  <xacro:property name="use_mesh_file" value="true" />
+  <xacro:property name="mesh_file" value="package://desktopquad_sim/agents/chiny/chinywhoop.dae" />
+  <xacro:property name="mass" value="2.856" />
+  <xacro:property name="body_width" value="0.085" />
+  <xacro:property name="body_height" value="0.01" />
+  <xacro:property name="body_inertia">
+    <inertia ixx="0.07" ixy="0.0" ixz="0.0" iyy="0.08" iyz="0.0" izz="0.12" />
+  </xacro:property>
+
+
+  <!-- *********************** GAZEBO ROBOT DEFINITION ******************* -->
+  <link name="${namespace}/base_link">
+    <inertial>
+      <mass value="${mass}" />  <!-- [kg] -->
+      <origin xyz="0 0 0" />
+      <xacro:insert_block name="body_inertia" />
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <xacro:if value="${use_mesh_file}">
+          <mesh filename="${mesh_file}" scale="1 1 1" />
+        </xacro:if>
+        <xacro:unless value="${use_mesh_file}">
+          <box size="${body_width} ${body_width} ${body_height}" />
+        </xacro:unless>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0.005" rpy="0 0 0" />
+      <geometry>
+        <box size="${body_width} ${body_width} ${body_height}" />
+      </geometry>
+    </collision>
+  </link>
+
+  <gazebo reference="${namespace}/base_link">
+    <material>Gazebo/$(arg color)</material>
+  </gazebo>
+
+
+  <!-- ************************* FORCES AND MOMENTS ********************** -->
+
+  <!-- Simplified Dynamics -->
+  <xacro:include filename="$(find fcu_sim_plugins)/xacro/multirotor_forces_and_moments.xacro"/>
+  <xacro:multirotor namespace="${namespace}" parent_link="${namespace}/base_link" command_topic="command"/>  
+
+
+  <!-- ***************** SENSORS ******************* -->
+  <!-- Ground Truth -->
+  <xacro:include filename="$(find fcu_sim_plugins)/xacro/odometry_sensor.xacro"/>
+  <xacro:ground_truth namespace="${namespace}" parent_link="${namespace}/base_link" />
+
+  <!-- Mount an IMU -->
+  <xacro:include filename="$(find fcu_sim_plugins)/xacro/imu.xacro"/>
+  <xacro:perfect_IMU
+    namespace="${namespace}"
+    parent_link="${namespace}/base_link"
+    imu_topic="imu/data"/>
+
+  <!-- Fixed Camera -->
+  <xacro:include filename="$(find fcu_sim_plugins)/xacro/camera.xacro"/>
+  <xacro:simple_camera
+    namespace="${namespace}"
+    frame_rate="30"
+    rgb_range="1000"
+    parent_link="${namespace}/base_link"
+    image_topic="rgb"
+    image_camera_info_topic="camera_info">
+    <origin xyz="0 0 0.002" rpy="0 -1.5707 1.5707"/>
+  </xacro:simple_camera>
+
+  <!-- to visualize the camera's pose: -->
+  <!--     put the <visual> tag in the -->
+  <!--     camera.xacro as shown below -->
+<!--   <link name="${namespace}/camera_base_link">
+    <inertial>
+      <mass value="0.001"/>
+      <xacro:insert_block name="origin"/>
+      <xacro:insert_block name="empty_inertia"/>
+    </inertial>
+    <visual name="${namespace}/camera_visual">
+      <xacro:insert_block name="origin"/>
+      <geometry>
+        <sphere radius="0.009"/>
+      </geometry>
+    </visual>
+  </link> -->
+
+</robot>

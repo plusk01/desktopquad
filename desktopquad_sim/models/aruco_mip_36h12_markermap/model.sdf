@@ -1,0 +1,32 @@
+<?xml version='1.0'?>
+<sdf version='1.4'>
+    <model name="aruco_mip_36h12_markermap">
+        <static>true</static>
+        <link name='link'>
+
+
+            <collision name ='collision'>
+                <geometry>
+                    <box>
+                        <size>0.2794 0.2159 0.001</size>
+                    </box>
+                </geometry>
+            </collision>
+            <visual name='visual'>
+                <geometry>
+                    <box>
+                        <size>0.2794 0.2159 0.001</size>
+                    </box>
+                </geometry>
+
+                <material>
+                    <script>
+                        <uri>model://aruco_mip_36h12_markermap/materials/scripts</uri>
+                        <uri>model://aruco_mip_36h12_markermap/materials/textures</uri>
+                        <name>aruco_mip_36h12_markermap/Diffuse</name>
+                    </script>
+                </material>
+            </visual>
+        </link>     
+    </model>
+</sdf>

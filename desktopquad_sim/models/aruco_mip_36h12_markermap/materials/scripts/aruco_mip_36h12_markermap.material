@@ -1,0 +1,15 @@
+material aruco_mip_36h12_markermap/Diffuse
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture aruco_mip_36h12_r50.png
+        filtering anistropic
+        max_anisotropy 16
+      }
+    }
+  }
+}

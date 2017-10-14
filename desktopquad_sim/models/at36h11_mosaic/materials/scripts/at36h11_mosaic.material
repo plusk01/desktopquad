@@ -1,0 +1,15 @@
+material at36h11_mosaic/Diffuse
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture at36h11_mosaic.png
+        filtering anistropic
+        max_anisotropy 16
+      }
+    }
+  }
+}
