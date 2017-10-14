@@ -5,7 +5,7 @@
   <!-- Start ROSflight SIL Gazebo Simulation -->
   <include file="$(find rosflight_sim)/launch/base.launch">
     <arg name="mav_name"      value="$(arg mav_name)"/>
-    <arg name="color"         value="black"/>
+    <arg name="color"         value="Black"/>
     <arg name="x"             value="0"/>
     <arg name="y"             value="0"/>
     <arg name="z"             value="0.015"/>
