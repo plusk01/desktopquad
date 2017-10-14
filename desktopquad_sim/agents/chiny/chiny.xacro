@@ -1,11 +1,4 @@
 <?xml version="1.0"?>
-<!--
-
-Gazebo Multirotor Definition File
-Author: James Jackson
-
--->
-
 <robot name="chiny" xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Properties -->
   <xacro:property name="namespace" value="chiny" />

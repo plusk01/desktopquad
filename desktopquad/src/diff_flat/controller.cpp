@@ -1,5 +1,4 @@
 #include <diff_flat/controller.h>
-#include <stdio.h>
 
 // Based on:
 // "Path Planning and Control Utilizing Differential Flatness of Rotorcraft," and corrected version
@@ -36,7 +35,7 @@ Controller::Controller() :
   is_flying_sub_ = nh_.subscribe("is_flying", 1, &Controller::isFlyingCallback, this);
   cmd_sub_ = nh_.subscribe("high_level_command", 1, &Controller::cmdCallback, this);
 
-  command_pub_ = nh_.advertise<fcu_common::Command>("command", 1);
+  command_pub_ = nh_.advertise<rosflight_msgs::Command>("command", 1);
 
   dims_.n = 7;
   dims_.p = 4;
@@ -116,9 +115,9 @@ void Controller::isFlyingCallback(const std_msgs::BoolConstPtr &msg) {
 }
 
 
-void Controller::cmdCallback(const fcu_common::CommandConstPtr &msg) {
+void Controller::cmdCallback(const rosflight_msgs::CommandConstPtr &msg) {
   switch(msg->mode) {
-    case fcu_common::Command::MODE_XPOS_YPOS_YAW_ALTITUDE:
+    case rosflight_msgs::Command::MODE_XPOS_YPOS_YAW_ALTITUDE:
       xc_.pn = msg->x;
       xc_.pe = msg->y;
       xc_.pd = msg->F;
@@ -156,7 +155,7 @@ void Controller::computeControl(double dt) {
 
   uint8_t mode_flag = control_mode_;
 
-  if(mode_flag == fcu_common::Command::MODE_XPOS_YPOS_YAW_ALTITUDE) {
+  if(mode_flag == rosflight_msgs::Command::MODE_XPOS_YPOS_YAW_ALTITUDE) {
 
     // --------------------------------
     // Manage setpoint to create proper
@@ -225,7 +224,7 @@ void Controller::computeControl(double dt) {
     double r_d = upsi*cos(xhat_.theta)/cos(xhat_.phi) - xhat_.q*tan(xhat_.phi);
 
     // Pack up commands to send to the onboard attitude controller
-    command_.mode = fcu_common::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE;
+    command_.mode = rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE;
     command_.F = saturate(T_d/max_thrust_, max_.throttle, 0.0);
     command_.x = saturate(phi_d, max_.roll, -max_.roll);
     command_.y = saturate(theta_d, max_.pitch, -max_.pitch);

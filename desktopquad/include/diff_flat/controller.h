@@ -1,16 +1,18 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
+#include <cstdio>
 
+#include <Eigen/Dense>
 #include <ros/ros.h>
-#include <fcu_common/Command.h>
-#include <fcu_common/simple_pid.h>
+#include <tf/tf.h>
+#include <dynamic_reconfigure/server.h>
+
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Bool.h>
-#include <tf/tf.h>
-#include <stdint.h>
-#include <dynamic_reconfigure/server.h>
-#include <Eigen/Dense>
+#include <rosflight_msgs/Command.h>
+
 #include <desktopquad/ControllerConfig.h>
 
 namespace diff_flat {
@@ -100,7 +102,7 @@ private:
   // Memory for sharing information between functions
   state_t xhat_ = {}; // estimate
   max_t max_ = {};
-  fcu_common::Command command_;
+  rosflight_msgs::Command command_;
   state_t xc_ = {}; // command
   double prev_time_;
   uint8_t control_mode_;
@@ -110,7 +112,7 @@ private:
   // Functions
   void stateCallback(const nav_msgs::OdometryConstPtr &msg);
   void isFlyingCallback(const std_msgs::BoolConstPtr &msg);
-  void cmdCallback(const fcu_common::CommandConstPtr &msg);
+  void cmdCallback(const rosflight_msgs::CommandConstPtr &msg);
 
   void computeControl(double dt);
   void resetIntegrators();
