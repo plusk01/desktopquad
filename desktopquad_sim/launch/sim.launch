@@ -42,11 +42,6 @@
       <remap from="input_image" to="camera/rgb" />
     </node>
 
-    <!-- <rosparam command="load" file="$(find desktopquad_sim)/agents/chiny/chiny_controller.yaml" ns="controller"/> -->
-<!--     <node name="controller" pkg="desktopquad" type="diff_flat" output="screen">
-      <remap from="estimate" to="ground_truth/odometry/NED"/>
-    </node> -->
-
     <!-- PID Position Controller -->
     <node name="controller" pkg="roscopter" type="controller">
       <remap from="estimate" to="ground_truth/odometry/NED"/>
