@@ -4,22 +4,22 @@
 
   <!-- Start Gazebo -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="paused" value="true"/>
-    <arg name="gui" value="true"/>
-    <arg name="verbose" value="false"/>
-    <arg name="debug" value="false"/>
-    <arg name="world_name" value="$(find desktopquad_sim)/worlds/platform.world"/>
+    <arg name="paused"      value="true"/>
+    <arg name="gui"         value="true"/>
+    <arg name="verbose"     value="false"/>
+    <arg name="debug"       value="false"/>
+    <arg name="world_name"  value="$(find desktopquad_sim)/worlds/platform.world"/>
   </include>
 
   <!-- Spawn Model in Gazebo -->
   <include file="$(find roscopter_sim)/launch/spawn_mav.launch">
-    <arg name="mav_name"            value="$(arg mav_name)"/>
-    <arg name="model"               value="$(find desktopquad_sim)/agents/chiny/chiny.xacro"/>
-    <arg name="x"                   value="0"/>
-    <arg name="y"                   value="0"/>
-    <arg name="z"                   value="0.015"/>
-    <arg name="yaw"                 value="-1.5708"/>
-    <arg name="color"               value="Black"/>
+    <arg name="mav_name"    value="$(arg mav_name)"/>
+    <arg name="model"       value="$(find desktopquad_sim)/agents/chiny/chiny.xacro"/>
+    <arg name="x"           value="0"/>
+    <arg name="y"           value="0"/>
+    <arg name="z"           value="0.015"/>
+    <arg name="yaw"         value="-1.5708"/>
+    <arg name="color"       value="Black"/>
   </include>
 
   <group ns="$(arg mav_name)">

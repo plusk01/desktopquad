@@ -14,8 +14,8 @@
     <arg name="gui"           value="true"/>
     <arg name="verbose"       value="false"/>
     <arg name="debug"         value="false"/>
-    <arg name="xacro_file"    value="$(find desktopquad_sim)/agents/chiny/chiny.xacro"/>
-    <arg name="param_file"    value="$(find rosflight_sim)/params/multirotor.yaml"/>
+    <arg name="xacro_file"    value="$(find desktopquad_sim)/agents/chiny/chiny_sil.xacro"/>
+    <arg name="param_file"    value="$(find desktopquad_sim)/agents/chiny/chiny_sil.yaml"/>
     <arg name="world_file"    value="$(find desktopquad_sim)/worlds/platform.world"/>
   </include>
 
@@ -34,13 +34,12 @@
     <node pkg="rostopic" type="rostopic" name="is_flying_pub" args="pub is_flying std_msgs/Bool true"/>
 
     <!-- Add frames to sim tf tree (chiny/truth) -->
-    <node pkg="desktopquad_sim" type="tf_sim_frames" name="tf_sim_frames" />
+    <!-- <node pkg="desktopquad_sim" type="tf_sim_frames" name="tf_sim_frames" /> -->
 
-    <!-- Estimator -->
-    <!-- <rosparam command="load" file="$(find ros_copter)/params/mekf.yaml" ns="estimator"/>
-    <node name="estimator" pkg="ros_copter" type="mekf" output="screen">
-      <param name="euler_integration_steps" value="20"/>
-    </node>-->
+    <!-- ROSflight IO Adapter -->
+    <node name="rosflight_io" pkg="rosflight" type="rosflight_io" output="screen">
+      <param name="udp" value="true"/>
+    </node>
 
     <!-- ArUco Localization -->
     <node name="aruco" pkg="aruco_localization" type="aruco_localization" output="screen">
@@ -52,14 +51,12 @@
     </node>
 
     <!-- PID Position Controller -->
-    <rosparam command="load" file="$(find desktopquad_sim)/agents/chiny/chiny_controller.yaml" ns="controller"/>
-    <node name="controller" pkg="desktopquad" type="diff_flat" output="screen">
-      <remap from="estimate" to="ground_truth/odometry"/>
+    <node name="controller" pkg="roscopter" type="controller">
+      <remap from="estimate" to="ground_truth/odometry/NED"/>
     </node>
 
     <!-- Waypoint Manager -->
     <node name="waypoint_manager" pkg="desktopquad" type="waypoint_manager.py" output="screen">
-      <rosparam command="load" file="$(find desktopquad_sim)/params/waypoints.yaml"/>
       <remap from="waypoint" to="high_level_command"/>
       <remap from="state" to="ground_truth/odometry"/>
     </node>
