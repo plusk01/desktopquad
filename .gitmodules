@@ -1,0 +1,15 @@
+[submodule "catkin_ws/src/rosflight"]
+	path = catkin_ws/src/rosflight
+	url = git@github.com:rosflight/rosflight.git
+[submodule "catkin_ws/src/rosflight_joy"]
+	path = catkin_ws/src/rosflight_joy
+	url = git@github.com:rosflight/rosflight_joy.git
+[submodule "catkin_ws/src/roscopter"]
+	path = catkin_ws/src/roscopter
+	url = git@github.com:byu-magicc/roscopter.git
+[submodule "catkin_ws/src/rosflight_plugins"]
+	path = catkin_ws/src/rosflight_plugins
+	url = git@github.com:byu-magicc/rosflight_plugins.git
+[submodule "catkin_ws/src/magicc_sim"]
+	path = catkin_ws/src/magicc_sim
+	url = git@github.com:byu-magicc/magicc_sim.git
