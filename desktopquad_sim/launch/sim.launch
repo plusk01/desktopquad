@@ -48,9 +48,13 @@
     </node>
 
     <!-- Waypoint Manager -->
-    <node name="waypoint_manager" pkg="desktopquad" type="waypoint_manager.py" output="screen">
+<!--     <node name="waypoint_manager" pkg="desktopquad" type="waypoint_manager.py" output="screen">
       <remap from="waypoint" to="high_level_command"/>
       <remap from="state" to="ground_truth/odometry/NED"/>
+    </node> -->
+
+    <node name="vimfly" pkg="roscopter_utils" type="vimfly">
+      <remap from="autopilot_command" to="high_level_command" />
     </node>
 
   </group>
