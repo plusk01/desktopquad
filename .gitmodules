@@ -13,3 +13,6 @@
 [submodule "catkin_ws/src/magicc_sim"]
 	path = catkin_ws/src/magicc_sim
 	url = git@github.com:byu-magicc/magicc_sim.git
+[submodule "catkin_ws/src/aruco_localization"]
+	path = catkin_ws/src/aruco_localization
+	url = git@github.com:plusk01/aruco_localization.git
