@@ -240,6 +240,7 @@
   <gazebo>
     <plugin name="platform" filename="libplatform_plugin.so">
       <baseLink>base_link</baseLink>
+      <baseHeight>${P['base']['height']}</baseHeight>
     </plugin>
   </gazebo>
 
