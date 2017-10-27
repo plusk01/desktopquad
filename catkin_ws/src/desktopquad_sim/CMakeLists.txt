@@ -13,6 +13,7 @@ endif()
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   gazebo_ros
+  gazebo_plugins
   tf
 )
 
@@ -22,7 +23,7 @@ find_package(
 )
 
 link_directories(${GAZEBO_LIBRARY_DIRS})
-include_directories(${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
 
 catkin_package(
   DEPENDS
@@ -34,3 +35,9 @@ catkin_package(
 
 add_executable(tf_sim_frames src/tf_sim_frames.cpp)
 target_link_libraries(tf_sim_frames ${catkin_LIBRARIES})
+
+## Build Gazebo Plugins
+
+add_library(platform_plugin src/platform_plugin.cpp)
+target_link_libraries(platform_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+add_dependencies(platform_plugin ${catkin_EXPORTED_TARGETS})

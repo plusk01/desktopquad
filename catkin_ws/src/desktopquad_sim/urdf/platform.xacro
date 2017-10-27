@@ -235,4 +235,12 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
+
+  <!-- ROS/Gazebo Platform Plugin -->
+  <gazebo>
+    <plugin name="platform" filename="libplatform_plugin.so">
+      <baseLink>base_link</baseLink>
+    </plugin>
+  </gazebo>
+
 </robot>
