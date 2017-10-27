@@ -38,6 +38,11 @@ void PlatformPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   else
     ROS_ERROR("[PlatformPlugin] Please specify a baseHeight.");
 
+  if (_sdf->HasElement("platformHeight"))
+    platform_height_ = _sdf->GetElement("platformHeight")->Get<double>();
+  else
+    ROS_ERROR("[PlatformPlugin] Please specify a platformHeight.");
+
   if (_sdf->HasElement("baseLink"))
     base_link_ = _model->GetLink(_sdf->GetElement("baseLink")->Get<std::string>());
   else
@@ -51,22 +56,38 @@ void PlatformPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
 void PlatformPlugin::OnUpdate(const common::UpdateInfo & _info)
 {
-    math::Pose inertial = base_link_->GetWorldPose();
 
-    // The inertial pose gets us to the bottom of the platform base. Since the
-    // platform coordinate system starts on the top-side of the base, we add
-    // the height (thickness) of the base to the z in the NWU Gazebo frame.
-    double z_nwu = inertial.pos.z + base_height_;
+  //
+  // Link world_ned frame to platform_base
+  //
 
-    // Note the conversion from NWU to NED via the negative signs on y and z -- both on pos and rot.
-    tf::Vector3 origin_ned = tf::Vector3(inertial.pos.x, -inertial.pos.y, -z_nwu);
-    tf::Quaternion quat_ned = tf::Quaternion(inertial.rot.x, -inertial.rot.y, -inertial.rot.z, inertial.rot.w);
+  math::Pose inertial = base_link_->GetWorldPose();
 
-    // Publish the transform to get from the world_ned (parent) frame to the platform_base (child) frame
-    tf::StampedTransform transform;
-    transform.setOrigin(origin_ned);
-    transform.setRotation(quat_ned);
-    br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world_ned", "platform_base"));
+  // The inertial pose gets us to the bottom of the platform base. Since the
+  // platform coordinate system starts on the top-side of the base, we add
+  // the height (thickness) of the base to the z in the NWU Gazebo frame.
+  double z_nwu = inertial.pos.z + base_height_;
+
+  // Note the conversion from NWU to NED via the negative signs on y and z -- both on pos and rot.
+  tf::Vector3 origin_ned = tf::Vector3(inertial.pos.x, -inertial.pos.y, -z_nwu);
+  tf::Quaternion quat_ned = tf::Quaternion(inertial.rot.x, -inertial.rot.y, -inertial.rot.z, inertial.rot.w);
+
+  // Publish the transform to get from the world_ned (parent) frame to the platform_base (child) frame
+  tf::StampedTransform transform;
+  transform.setOrigin(origin_ned);
+  transform.setRotation(quat_ned);
+  br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world_ned", "platform_base"));
+
+  //
+  // Link platform_base to aruco_map
+  //
+
+  double z_ned = -platform_height_;
+
+  // Publish the transform to get from the platform_base (parent) frame to the aruco_map (child) frame
+  transform.setIdentity();
+  transform.setOrigin(tf::Vector3(0, 0, z_ned));
+  br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "platform_base", "aruco_map"));
 }
 
 // ----------------------------------------------------------------------------

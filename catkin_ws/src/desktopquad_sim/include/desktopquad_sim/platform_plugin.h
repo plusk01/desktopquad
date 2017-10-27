@@ -38,5 +38,6 @@ namespace gazebo
     event::ConnectionPtr updateConnection_;
 
     double base_height_ = 0;
+    double platform_height_ = 0;
   };
 } // namespace gazebo
