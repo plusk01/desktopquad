@@ -1,0 +1,65 @@
+base:
+  # Physical properties and dimensions
+  mass: 1
+  length: 0.3
+  width: 0.25
+  height: 0.015
+
+  pose:
+    x: 0
+    y: 0
+    z: 0.0075
+    R: 0
+    P: 0
+    Y: 0
+
+rods:
+  # Physical properties and dimensions
+  mass: 1
+  length: 0.4064
+  radius: 0.003
+
+  left_pose:
+    x: -0.13
+    y: 0.1
+    z: 0.2032
+    R: 0
+    P: 0
+    Y: 0
+
+  right_pose:
+    x: 0.13
+    y: 0.1
+    z: 0.2032
+    R: 0
+    P: 0
+    Y: 0
+
+top:
+  # Physical properties and dimensions
+  mass: 0.05
+  length: 0.3
+  width: 0.25
+  height: 0.003
+
+  pose:
+    x: 0
+    y: 0
+    z: 0.4094
+    R: 0
+    P: 0
+    Y: 0
+
+aruco:
+  # Physical properties and dimensions
+  length: 0.2794 # 8.5"
+  width: 0.2159  # 11"
+  height: 0.001
+
+  pose:
+    x: -0.004
+    y: 0
+    z: 0.407
+    R: 3.14159
+    P: 0
+    Y: 3.14159

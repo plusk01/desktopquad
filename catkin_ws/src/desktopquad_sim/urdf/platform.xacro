@@ -2,27 +2,55 @@
 <!-- Revolute-Revolute Manipulator -->
 <robot name="platform" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Constants for robot dimensions -->
-  <xacro:property name="PI" value="3.1415926535897931"/>
-  <xacro:property name="mass" value="1" /> <!-- arbitrary value for mass -->
-  <xacro:property name="width" value="0.1" /> <!-- Square dimensions (widthxwidth) of beams -->
-  <xacro:property name="height1" value="2" /> <!-- Link 1 -->
-  <xacro:property name="height2" value="1" /> <!-- Link 2 -->
-  <xacro:property name="height3" value="1" /> <!-- Link 3 -->
-  <xacro:property name="camera_link" value="0.05" /> <!-- Size of square 'camera' box -->
-  <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
+  <xacro:property name="P" value="${load_yaml('$(find desktopquad)/params/platform.yaml')}"/>
 
+  <xacro:macro name="origin_pose" params="pose">
+    <!-- Expects that 'pose' is a YAML dict with (x, y, z, R, P, Y) -->
+    <origin xyz="${pose['x']} ${pose['y']} ${pose['z']}" rpy="${pose['R']} ${pose['P']} ${pose['Y']}" />
+  </xacro:macro>
+
+  <!-- Physical properties of the base -->
+  <xacro:property name="bM" value="${P['base']['mass']}" />    <!-- base mass -->
+  <xacro:property name="bL" value="${P['base']['length']}" />  <!-- base length (x)-->
+  <xacro:property name="bW" value="${P['base']['width']}" />   <!-- base width  (y) -->
+  <xacro:property name="bH" value="${P['base']['height']}" />  <!-- base height (z) -->
   <xacro:property name="base_inertia">
-    <inertia ixx="0.166667" ixy="0.0" ixz="0.0" iyy="0.166667" iyz="0.0" izz="0.166667" />
+    <inertia
+        ixx="${bM / 12.0 * (bW*bW + bH*bH)}" ixy="0.0" ixz="0.0"
+        iyy="${bM / 12.0 * (bH*bH + bL*bL)}" iyz="0.0"
+        izz="${bM / 12.0 * (bW*bW + bL*bL)}"/>
   </xacro:property>
 
-  <xacro:property name="top_inertia">
-    <inertia ixx="0.166667" ixy="0.0" ixz="0.0" iyy="0.166667" iyz="0.0" izz="0.166667" />
-  </xacro:property>
 
+  <!-- Physical properties of the rods -->
+  <xacro:property name="rM" value="${P['rods']['mass']}" />     <!-- rod mass -->
+  <xacro:property name="rL" value="${P['rods']['length']}" />   <!-- rod length (z) -->
+  <xacro:property name="rR" value="${P['rods']['radius']}" />   <!-- rod radius (xy) -->
   <xacro:property name="rod_inertia">
-    <inertia ixx="0.145833" ixy="0.0" ixz="0.0" iyy="0.145833" iyz="0.0" izz="0.125" />
+    <inertia
+        ixx="${rM / 12.0 * (3*rR*rR + rL*rL)}" ixy="0.0" ixz="0.0"
+        iyy="${rM / 12.0 * (3*rR*rR + rL*rL)}" iyz="0.0"
+        izz="${rM * rR*rR / 12.0}"/>
   </xacro:property>
+
+
+  <!-- Physical properties of the top -->
+  <xacro:property name="tM" value="${P['top']['mass']}" />    <!-- top mass -->
+  <xacro:property name="tL" value="${P['top']['length']}" />  <!-- top length (x)-->
+  <xacro:property name="tW" value="${P['top']['width']}" />   <!-- top width  (y) -->
+  <xacro:property name="tH" value="${P['top']['height']}" />  <!-- top height (z) -->
+  <xacro:property name="top_inertia">
+    <inertia
+        ixx="${tM / 12.0 * (tW*tW + tH*tH)}" ixy="0.0" ixz="0.0"
+        iyy="${tM / 12.0 * (tH*tH + tL*tL)}" iyz="0.0"
+        izz="${tM / 12.0 * (tW*tW + tL*tL)}"/>
+  </xacro:property>
+
+
+  <!-- Physical properties of the ArUco map -->
+  <xacro:property name="aL" value="${P['aruco']['length']}" />  <!-- map/paper length (x)-->
+  <xacro:property name="aW" value="${P['aruco']['width']}" />   <!-- map/paper width  (y) -->
+  <xacro:property name="aH" value="${P['aruco']['height']}" />  <!-- map/paper height (z) -->
 
   <!--*****************************-->
   <!-- Gazebo Materials and Colors -->
@@ -69,22 +97,22 @@
   <!-- Base Link -->
   <link name='base_link'>
     <inertial>
-      <origin xyz="0 0 0.0075" rpy="0 0 0" />
-      <mass value="1" />
+      <xacro:origin_pose pose="${P['base']['pose']}" />
+      <mass value="${bM}" />
       <xacro:insert_block name="base_inertia" />
     </inertial>
 
     <visual>
-      <origin xyz="0 0 0.0075" rpy="0 0 0" />
+      <xacro:origin_pose pose="${P['base']['pose']}" />
       <geometry>
-        <box size="0.3 0.25 0.015" />
+        <box size="${bL} ${bW} ${bH}" />
       </geometry>
     </visual>
     
     <collision name='collision'>
-      <origin xyz="0 0 0.0075" rpy="0 0 0" />
+      <xacro:origin_pose pose="${P['base']['pose']}" />
       <geometry>
-        <box size="0.3 0.25 0.015" />
+        <box size="${bL} ${bW} ${bH}" />
       </geometry>
     </collision>
   </link>
@@ -93,22 +121,22 @@
   <!-- Left Rod -->
   <link name='left_rod'>
     <inertial>
-      <origin xyz="-0.13 0.1 0.2032" rpy="0 0 0" />
-      <mass value="1" />
+      <xacro:origin_pose pose="${P['rods']['left_pose']}" />
+      <mass value="${rM}" />
       <xacro:insert_block name="rod_inertia" />
     </inertial>
 
     <visual>
-      <origin xyz="-0.13 0.1 0.2032" rpy="0 0 0" />
+      <xacro:origin_pose pose="${P['rods']['left_pose']}" />
       <geometry>
-        <cylinder length="0.4064" radius="0.003"/>
+        <cylinder length="${rL}" radius="${rR}"/>
       </geometry>
     </visual>
 
     <collision>
-      <origin xyz="-0.13 0.1 0.2032" rpy="0 0 0" />
+      <xacro:origin_pose pose="${P['rods']['left_pose']}" />
       <geometry>
-        <cylinder length="0.4064" radius="0.003"/>
+        <cylinder length="${rL}" radius="${rR}"/>
       </geometry>
     </collision>
   </link>
@@ -123,22 +151,22 @@
   <!-- Right Rod -->
   <link name='right_rod'>
     <inertial>
-      <origin xyz="0.13 0.1 0.2032" rpy="0 0 0" />
-      <mass value="1" />
+      <xacro:origin_pose pose="${P['rods']['right_pose']}" />
+      <mass value="${rM}" />
       <xacro:insert_block name="rod_inertia" />
     </inertial>
 
     <visual>
-      <origin xyz="0.13 0.1 0.2032" rpy="0 0 0" />
+      <xacro:origin_pose pose="${P['rods']['right_pose']}" />
       <geometry>
-        <cylinder length="0.4064" radius="0.003"/>
+        <cylinder length="${rL}" radius="${rR}"/>
       </geometry>
     </visual>
 
     <collision>
-      <origin xyz="0.13 0.1 0.2032" rpy="0 0 0" />
+      <xacro:origin_pose pose="${P['rods']['right_pose']}" />
       <geometry>
-        <cylinder length="0.4064" radius="0.003"/>
+        <cylinder length="${rL}" radius="${rR}"/>
       </geometry>
     </collision>
   </link>
@@ -153,22 +181,22 @@
   <!-- Top/Plexiglass -->
   <link name='top_link'>
     <inertial>
-      <origin xyz="-0 0 0.4094" rpy="0 0 0" />
-      <mass value="0.05" />
-      <xacro:insert_block name="base_inertia" />
+      <xacro:origin_pose pose="${P['top']['pose']}" />
+      <mass value="${tM}" />
+      <xacro:insert_block name="top_inertia" />
     </inertial>
 
     <visual>
-      <origin xyz="-0 0 0.4094" rpy="0 0 0" />
+      <xacro:origin_pose pose="${P['top']['pose']}" />
       <geometry>
-        <box size="0.3 0.25 0.003" />
+        <box size="${tL} ${tW} ${tH}" />
       </geometry>
     </visual>
 
     <collision>
-      <origin xyz="-0 0 0.4094" rpy="0 0 0" />
+      <xacro:origin_pose pose="${P['top']['pose']}" />
       <geometry>
-        <box size="0.3 0.25 0.003" />
+        <box size="${tL} ${tW} ${tH}" />
       </geometry>
     </collision>
   </link>
@@ -187,15 +215,16 @@
     <!-- marker, and then measured a printed version of the marker map and found the necessary (x,y) offsets -->
     <!-- that would put the center of the middle ArUco tag in the center of Gazebo -->
     <visual>
-      <origin xyz="-0.004 0 0.407" rpy="3.14159 0 3.14159" />
+      <xacro:origin_pose pose="${P['aruco']['pose']}" />
       <geometry>
-        <box size="0.2794 0.2159 0.001" />
+        <box size="${aL} ${aW} ${aH}" />
       </geometry>
     </visual>
 
     <collision>
+      <xacro:origin_pose pose="${P['aruco']['pose']}" />
       <geometry>
-        <box size="0.2794 0.2159 0.001" />
+        <box size="${aL} ${aW} ${aH}" />
       </geometry>
     </collision>
   </link>
