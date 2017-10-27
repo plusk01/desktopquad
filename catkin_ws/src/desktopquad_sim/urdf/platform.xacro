@@ -1,0 +1,209 @@
+<?xml version="1.0"?>
+<!-- Revolute-Revolute Manipulator -->
+<robot name="platform" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Constants for robot dimensions -->
+  <xacro:property name="PI" value="3.1415926535897931"/>
+  <xacro:property name="mass" value="1" /> <!-- arbitrary value for mass -->
+  <xacro:property name="width" value="0.1" /> <!-- Square dimensions (widthxwidth) of beams -->
+  <xacro:property name="height1" value="2" /> <!-- Link 1 -->
+  <xacro:property name="height2" value="1" /> <!-- Link 2 -->
+  <xacro:property name="height3" value="1" /> <!-- Link 3 -->
+  <xacro:property name="camera_link" value="0.05" /> <!-- Size of square 'camera' box -->
+  <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
+
+  <xacro:property name="base_inertia">
+    <inertia ixx="0.166667" ixy="0.0" ixz="0.0" iyy="0.166667" iyz="0.0" izz="0.166667" />
+  </xacro:property>
+
+  <xacro:property name="top_inertia">
+    <inertia ixx="0.166667" ixy="0.0" ixz="0.0" iyy="0.166667" iyz="0.0" izz="0.166667" />
+  </xacro:property>
+
+  <xacro:property name="rod_inertia">
+    <inertia ixx="0.145833" ixy="0.0" ixz="0.0" iyy="0.145833" iyz="0.0" izz="0.125" />
+  </xacro:property>
+
+  <!--*****************************-->
+  <!-- Gazebo Materials and Colors -->
+  <!--*****************************-->
+
+  <gazebo reference="base_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="left_rod">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <gazebo reference="right_rod">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <gazebo reference="top_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="aruco_tags">
+    <material>aruco_mip_36h12_markermap/Diffuse</material>
+  </gazebo>
+
+
+  <!--*****************************************-->
+  <!--  Make Platform Steadfast and Immovable  -->
+  <!--*****************************************-->
+
+  <!-- Used for fixing robot to Gazebo 'base_link' -->
+  <link name="world"/>
+
+  <joint name="fixed" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+  </joint>
+
+
+  <!--*****************************-->
+  <!--  DesktopQuad Platform Desc  -->
+  <!--*****************************-->
+
+  <!-- Base Link -->
+  <link name='base_link'>
+    <inertial>
+      <origin xyz="0 0 0.0075" rpy="0 0 0" />
+      <mass value="1" />
+      <xacro:insert_block name="base_inertia" />
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0.0075" rpy="0 0 0" />
+      <geometry>
+        <box size="0.3 0.25 0.015" />
+      </geometry>
+    </visual>
+    
+    <collision name='collision'>
+      <origin xyz="0 0 0.0075" rpy="0 0 0" />
+      <geometry>
+        <box size="0.3 0.25 0.015" />
+      </geometry>
+    </collision>
+  </link>
+
+
+  <!-- Left Rod -->
+  <link name='left_rod'>
+    <inertial>
+      <origin xyz="-0.13 0.1 0.2032" rpy="0 0 0" />
+      <mass value="1" />
+      <xacro:insert_block name="rod_inertia" />
+    </inertial>
+
+    <visual>
+      <origin xyz="-0.13 0.1 0.2032" rpy="0 0 0" />
+      <geometry>
+        <cylinder length="0.4064" radius="0.003"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="-0.13 0.1 0.2032" rpy="0 0 0" />
+      <geometry>
+        <cylinder length="0.4064" radius="0.003"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="base_left_rod" type="fixed">
+    <parent link="base_link"/>
+    <child link="left_rod"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+
+  <!-- Right Rod -->
+  <link name='right_rod'>
+    <inertial>
+      <origin xyz="0.13 0.1 0.2032" rpy="0 0 0" />
+      <mass value="1" />
+      <xacro:insert_block name="rod_inertia" />
+    </inertial>
+
+    <visual>
+      <origin xyz="0.13 0.1 0.2032" rpy="0 0 0" />
+      <geometry>
+        <cylinder length="0.4064" radius="0.003"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="0.13 0.1 0.2032" rpy="0 0 0" />
+      <geometry>
+        <cylinder length="0.4064" radius="0.003"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="base_right_rod" type="fixed">
+    <parent link="base_link"/>
+    <child link="right_rod"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+
+  <!-- Top/Plexiglass -->
+  <link name='top_link'>
+    <inertial>
+      <origin xyz="-0 0 0.4094" rpy="0 0 0" />
+      <mass value="0.05" />
+      <xacro:insert_block name="base_inertia" />
+    </inertial>
+
+    <visual>
+      <origin xyz="-0 0 0.4094" rpy="0 0 0" />
+      <geometry>
+        <box size="0.3 0.25 0.003" />
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="-0 0 0.4094" rpy="0 0 0" />
+      <geometry>
+        <box size="0.3 0.25 0.003" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="top_left_rod" type="fixed">
+    <!-- Only need a fixed joint to connect to one rod -->
+    <parent link="left_rod"/>
+    <child link="top_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+
+  <!-- ArUco Marker Map -->
+  <link name='aruco_tags'>
+    <!-- I compared the Gazebo model with a piece a paper, noted where the z-axis went through the middle -->
+    <!-- marker, and then measured a printed version of the marker map and found the necessary (x,y) offsets -->
+    <!-- that would put the center of the middle ArUco tag in the center of Gazebo -->
+    <visual>
+      <origin xyz="-0.004 0 0.407" rpy="3.14159 0 3.14159" />
+      <geometry>
+        <box size="0.2794 0.2159 0.001" />
+      </geometry>
+    </visual>
+
+    <collision>
+      <geometry>
+        <box size="0.2794 0.2159 0.001" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="top_aruco" type="fixed">
+    <parent link="top_link"/>
+    <child link="aruco_tags"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+</robot>

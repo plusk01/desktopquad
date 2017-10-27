@@ -24,8 +24,9 @@
   <export>
     <!-- Other tools can request additional information be placed here -->
 
-    <!-- change environment variable for models path -->
+    <!-- change environment variable for models and media path -->
     <gazebo_ros gazebo_model_path="${prefix}/models" />
+    <gazebo_ros gazebo_media_path="${prefix}" />
 
   </export>
 </package>
