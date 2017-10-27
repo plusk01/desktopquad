@@ -55,7 +55,7 @@ vimfly: {
 u_cmd: 0.1,
 v_cmd: 0.1,
 psidot_cmd: 3.14159,
-alt_start: -0.35,
+alt_start: -1.35,
 alt_step: 0.01,
 
 }

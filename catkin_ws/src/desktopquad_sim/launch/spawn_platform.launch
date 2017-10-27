@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="x" default="0.0"/>
+    <arg name="y" default="0.0"/>
+    <arg name="z" default="1.0"/>
+    <arg name="yaw" default="0.0"/>
+
+    <!-- Load the URDF into the ROS Parameter Server -->
+    <param name="platform_description"
+    command="$(find xacro)/xacro --inorder '$(find desktopquad_sim)/urdf/platform.xacro'" />
+
+    <!-- push platform_description to factory and spawn robot in gazebo -->
+    <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model"
+      args="-param platform_description
+            -urdf
+            -x $(arg x)
+            -y $(arg y)
+            -z $(arg z)
+            -Y $(arg yaw)
+            -gazebo_namespace /gazebo
+            -robot_namespace /platform
+            -model platform"
+      respawn="false" output="screen">
+    </node>
+
+</launch>
