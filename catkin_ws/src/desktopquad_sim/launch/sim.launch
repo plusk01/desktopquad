@@ -35,11 +35,14 @@
     <!-- Load common parameters -->
     <rosparam command="load" file="$(find desktopquad_sim)/agents/chiny/chiny.yaml"/>
 
+    <!-- Load common parameters -->
+    <rosparam command="load" file="$(find desktopquad)/params/platform.yaml" ns="platform"/>
+
     <!-- Is Flying Publisher -->
     <node pkg="rostopic" type="rostopic" name="is_flying_pub" args="pub is_flying std_msgs/Bool true"/>
 
-    <!-- Add frames to sim tf tree (chiny/truth) -->
-    <!-- <node pkg="desktopquad_sim" type="tf_sim_frames" name="tf_sim_frames" /> -->
+    <!-- Add tf frames for this physical setup -->
+    <node pkg="desktopquad" type="tf_frames" name="tf_frames" />
 
     <!-- ArUco Localization -->
     <node name="aruco" pkg="aruco_localization" type="aruco_localization" output="screen">

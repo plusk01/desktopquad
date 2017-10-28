@@ -38,11 +38,6 @@ void PlatformPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   else
     ROS_ERROR("[PlatformPlugin] Please specify a baseHeight.");
 
-  if (_sdf->HasElement("platformHeight"))
-    platform_height_ = _sdf->GetElement("platformHeight")->Get<double>();
-  else
-    ROS_ERROR("[PlatformPlugin] Please specify a platformHeight.");
-
   if (_sdf->HasElement("baseLink"))
     base_link_ = _model->GetLink(_sdf->GetElement("baseLink")->Get<std::string>());
   else
@@ -77,17 +72,6 @@ void PlatformPlugin::OnUpdate(const common::UpdateInfo & _info)
   transform.setOrigin(origin_ned);
   transform.setRotation(quat_ned);
   br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world_ned", "platform_base"));
-
-  //
-  // Link platform_base to aruco_map
-  //
-
-  double z_ned = -platform_height_;
-
-  // Publish the transform to get from the platform_base (parent) frame to the aruco_map (child) frame
-  transform.setIdentity();
-  transform.setOrigin(tf::Vector3(0, 0, z_ned));
-  br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "platform_base", "aruco_map"));
 }
 
 // ----------------------------------------------------------------------------

@@ -52,8 +52,8 @@ top:
 
 aruco:
   # Physical properties and dimensions
-  length: 0.2794 # 8.5"
-  width: 0.2159  # 11"
+  length: 0.2794 # 11"
+  width: 0.2159  # 8.5"
   height: 0.001
 
   pose:

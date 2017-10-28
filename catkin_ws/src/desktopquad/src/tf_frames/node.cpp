@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include "tf_frames/tf_frames.h"
+#include "tf_frames/TFFrames.h"
 
 int main(int argc, char** argv) {
   // start node
@@ -8,6 +8,14 @@ int main(int argc, char** argv) {
   // instantiate an object
   tf_frames::TFFrames frames;
 
-  ros::spin();
+  // Tell TFFrames that a tick has passed
+  ros::Rate r(100);
+  while(ros::ok())
+  {
+    frames.tick();
+    ros::spinOnce();
+    r.sleep();
+  }
+
   return 0;
 }

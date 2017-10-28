@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   nav_msgs
   rosflight_msgs
+  tf
   eigen_conversions
   dynamic_reconfigure
 )
@@ -144,9 +145,8 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_diff_flat
-  src/diff_flat/node.cpp
-  src/diff_flat/controller.cpp)
+add_executable(${PROJECT_NAME}_diff_flat src/diff_flat/node.cpp src/diff_flat/controller.cpp)
+add_executable(${PROJECT_NAME}_tf_frames src/tf_frames/node.cpp src/tf_frames/TFFrames.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -154,13 +154,16 @@ add_executable(${PROJECT_NAME}_diff_flat
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 set_target_properties(${PROJECT_NAME}_diff_flat PROPERTIES OUTPUT_NAME diff_flat PREFIX "")
+set_target_properties(${PROJECT_NAME}_tf_frames PROPERTIES OUTPUT_NAME tf_frames PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_diff_flat ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_tf_frames ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_diff_flat ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_tf_frames ${catkin_LIBRARIES})
 
 #############
 ## Install ##
