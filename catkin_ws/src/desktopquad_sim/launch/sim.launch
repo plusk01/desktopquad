@@ -18,7 +18,7 @@
     <arg name="x"           value="0"/>
     <arg name="y"           value="0"/>
     <arg name="z"           value="1.05"/>
-    <arg name="yaw"         value="-1.5708"/>
+    <!-- <arg name="yaw"         value="-1.5708"/> -->
     <arg name="color"       value="Black"/>
   </include>
 

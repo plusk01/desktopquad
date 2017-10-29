@@ -15,7 +15,7 @@
   <link name="${namespace}/base_link">
     <inertial>
       <mass value="${mass}" />  <!-- [kg] -->
-      <origin xyz="0 0 0" />
+      <origin xyz="0 0 0.005" />
       <xacro:insert_block name="body_inertia" />
     </inertial>
 

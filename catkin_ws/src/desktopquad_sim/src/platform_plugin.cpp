@@ -52,8 +52,20 @@ void PlatformPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 void PlatformPlugin::OnUpdate(const common::UpdateInfo & _info)
 {
 
+  // Create a transform object to be used throughout
+  tf::StampedTransform transform;
+
   //
-  // Link world_ned frame to platform_base
+  // Link the inertial NWU world to world_NED
+  //
+
+  transform.setIdentity();
+  tf::Quaternion qNWU2NED; qNWU2NED.setRPY(M_PI, 0.0, 0.0);
+  transform.setRotation(qNWU2NED);
+  br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "world_NED"));
+
+  //
+  // Link world (NWU) frame to platform (NWU)
   //
 
   math::Pose inertial = base_link_->GetWorldPose();
@@ -63,15 +75,14 @@ void PlatformPlugin::OnUpdate(const common::UpdateInfo & _info)
   // the height (thickness) of the base to the z in the NWU Gazebo frame.
   double z_nwu = inertial.pos.z + base_height_;
 
-  // Note the conversion from NWU to NED via the negative signs on y and z -- both on pos and rot.
-  tf::Vector3 origin_ned = tf::Vector3(inertial.pos.x, -inertial.pos.y, -z_nwu);
-  tf::Quaternion quat_ned = tf::Quaternion(inertial.rot.x, -inertial.rot.y, -inertial.rot.z, inertial.rot.w);
+  tf::Vector3 origin_nwu = tf::Vector3(inertial.pos.x, inertial.pos.y, z_nwu);
+  tf::Quaternion quat_nwu = tf::Quaternion(inertial.rot.x, inertial.rot.y, inertial.rot.z, inertial.rot.w);
 
-  // Publish the transform to get from the world_ned (parent) frame to the platform_base (child) frame
-  tf::StampedTransform transform;
-  transform.setOrigin(origin_ned);
-  transform.setRotation(quat_ned);
-  br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world_ned", "platform_base"));
+  // Publish the transform to get from the PARENT world (NWU) frame to the CHILD platform (NWU) frame
+  transform.setIdentity();
+  transform.setOrigin(origin_nwu);
+  transform.setRotation(quat_nwu);
+  br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "platform"));
 }
 
 // ----------------------------------------------------------------------------
