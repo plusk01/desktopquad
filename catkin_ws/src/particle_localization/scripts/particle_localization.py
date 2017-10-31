@@ -2,6 +2,8 @@
 import rospy
 import time, tf
 import numpy as np
+from sensor_msgs.imu import Imu
+from dynamics import ConstVel as Dynam
 
 class ParticleLocalization:
     """
@@ -25,8 +27,9 @@ class ParticleLocalization:
         # PARKER ARUCO STUFF
         rospy.Subscriber("aruco_measurements", MSG_TYPE, self.aruco_callback)
         # ROSFLIGHT ACCEL & GYRO STUFF
-        rospy.Subscriber("accel_gyro_stuff", MSG_TYPE, self.imu_callback)
+        rospy.Subscriber("accel_gyro_stuff", Imu, self.imu_callback)
 
+        self.dynamics = Dynam()
         self.particle_update = False
         self.prev_time = rospy.Time.now()
         self.measurements = []
@@ -57,11 +60,14 @@ class ParticleLocalization:
 
     def imu_callback(self, msg)
         # store accel & gyro for dynamics
+        u = np.zeros(6)
+        u[0:3] = msg.linear_acceleration
+        u[4:] = msg.angular_velocity
         if not self.particle_update
             dt = self.prev_time - rospy.Time.now()
             self.prev_time = rospy.Time.now()
-            self.imu = 0
-            self.propogate(dt)
+            self.particles = self.dynamics.propogate(
+                                self.particles,u, dt)
 
 
 def main():
