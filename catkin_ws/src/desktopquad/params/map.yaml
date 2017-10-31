@@ -1,0 +1,46 @@
+# ArUco Marker map
+# 7x5 marker map with 29mm square tags. Position measured in 3D space as the center of each tag.
+# To be used as a map for Monte Carlo Localization (MCL) (i.e., particle filter localization).
+name: ArUco_mip_36h12_r50,
+num_landmarks: 35,
+landmarks:
+  # Row 1
+  - { id:  55, position: [0.070, 0.105, 0] }
+  - { id:   2, position: [0.070, 0.070, 0] }
+  - { id: 130, position: [0.070, 0.035, 0] }
+  - { id:  98, position: [0.070, 0.000, 0] }
+  - { id: 162, position: [0.070, -.035, 0] }
+  - { id: 106, position: [0.070, -.070, 0] }
+  - { id:  83, position: [0.070, -.105, 0] }
+  # Row 2
+  - { id:  90, position: [0.035, 0.105, 0] }
+  - { id:  11, position: [0.035, 0.070, 0] }
+  - { id: 135, position: [0.035, 0.035, 0] }
+  - { id:  17, position: [0.035, 0.000, 0] }
+  - { id: 235, position: [0.035, -.035, 0] }
+  - { id: 190, position: [0.035, -.070, 0] }
+  - { id: 128, position: [0.035, -.105, 0] }
+  # Row 3
+  - { id: 122, position: [0.000, 0.105, 0] }
+  - { id:  80, position: [0.000, 0.070, 0] }
+  - { id: 197, position: [0.000, 0.035, 0] }
+  - { id: 101, position: [0.000, 0.000, 0] }
+  - { id: 115, position: [0.000, -.035, 0] }
+  - { id: 117, position: [0.000, -.070, 0] }
+  - { id:  76, position: [0.000, -.105, 0] }
+  # Row 4
+  - { id:  44, position: [-.035, 0.105, 0] }
+  - { id: 118, position: [-.035, 0.070, 0] }
+  - { id:  36, position: [-.035, 0.035, 0] }
+  - { id: 105, position: [-.035, 0.000, 0] }
+  - { id: 139, position: [-.035, -.035, 0] }
+  - { id: 203, position: [-.035, -.070, 0] }
+  - { id: 230, position: [-.035, -.105, 0] }
+  # Row 5
+  - { id:  25, position: [-.070, 0.105, 0] }
+  - { id:  65, position: [-.070, 0.070, 0] }
+  - { id: 120, position: [-.070, 0.035, 0] }
+  - { id:  33, position: [-.070, 0.000, 0] }
+  - { id: 158, position: [-.070, -.035, 0] }
+  - { id: 132, position: [-.070, -.070, 0] }
+  - { id: 127, position: [-.070, -.105, 0] }
