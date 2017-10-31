@@ -9,17 +9,19 @@ class ConstVel(object):
     thus, all state-estimates will be maintained outside of the class
     """
 
-    def __init__(self, M):
+    def __init__(self, M_acc, M_gyro):
         """
         Inputs:
-        M - kxk np array input noise
+        M_acc - 3x3 np array input noise
+        M_gyro - 3x3 np array input noise
         """
-        self.M = M
+        self.M_acc = M_acc
+        self.M_gyro = M_gyro
 
     def propogate(self, X, u, dt):
         """
         Propogates the dynamics using RK4 integration
-        Note: if this is too slow, we can replace with euler
+        Note: if this is too slow, we can replace with euler integration
 
         Inputs:
         X - nxnum_particles estimates of state
@@ -48,12 +50,16 @@ class ConstVel(object):
         Xp - predictions  
         """
         n = X.shape[0]
+        acc = u[:3]
+        gyro = u[3:]
         Xdot = np.zeros(n)
-        Xdot[:n//2] = X[n//2:]
+        Xdot[:3] = X[6:9]
+        Xdot[3:6] = gyro
 
-        mu = np.zeros(n//2)
+        mu = np.zeros(3)
         # Does it make sense to add in noise during the integration?
-        Xdot[n//2:] = u + np.random.multivariate_normal(mean=mu, cov=self.M) 
+        Xdot[6:9] = acc + np.random.multivariate_normal(mean=mu, cov=self.M_acc) 
+        Xdot[9:12] = np.random.multivariate_naormal(mean=mu, cov=self.M_gyro)
 
         return Xdot
 
@@ -67,9 +73,12 @@ class QuadRotor(object):
     """
     def __init__(self, M):
         """
-        M - nxn numpy array input noise
+        Inputs:
+        M_acc - 3x3 np array input noise
+        M_gyro - 3x3 np array input noise
         """
-        self.M = M
+        self.M_acc = M_acc
+        self.M_gyro = M_gyro
 
     def propogate(self, X, u, dt):
         """
