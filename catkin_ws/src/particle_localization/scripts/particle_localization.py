@@ -4,6 +4,7 @@ import time, tf
 import numpy as np
 from sensor_msgs.imu import Imu
 from dynamics import ConstVel as Dynam
+from aruco_localization import MarkerMeasurement, MarkerMeasurementArray
 
 class ParticleLocalization:
     """
@@ -20,16 +21,21 @@ class ParticleLocalization:
             rospy.logfatal('Params not set in /desktopquad namespace')
             rospy.signal_shutdown('Params not set')
 
+        self.map = self.param['map']
+        M_acc = self.param['M_acc']
+        M_gyro = self.param['M_gyro']
+        self.R = self.param['R_aruco']
+
         n_particles = self.param['n_particles']
-        mins = self.param['mins'] # mins of states for pose and pose_d
-        maxs = self.param['maxs'] # maxes of states for pose and pose_d
 
         # PARKER ARUCO STUFF
-        rospy.Subscriber("aruco_measurements", MSG_TYPE, self.aruco_callback)
+        rospy.Subscriber("measurements", MarkerMeasurementArray, self.aruco_callback)
         # ROSFLIGHT ACCEL & GYRO STUFF
-        rospy.Subscriber("accel_gyro_stuff", Imu, self.imu_callback)
+        rospy.Subscriber("imu/data", Imu, self.imu_callback)
 
-        self.dynamics = Dynam()
+        self.init_particles(n_particles)
+
+        self.dynamics = Dynam(M_acc, M_gyro)
         self.particle_update = False
         self.prev_time = rospy.Time.now()
         self.measurements = []
@@ -38,14 +44,22 @@ class ParticleLocalization:
 
     def init_particles(self, n_particles):
         # need to think about how to efficiently initialize particles
-        self.particles = 0
+        mins = self.param['mins']
+        maxs = self.param['maxs']
+        self.particles = np.zeros((12, n_particles))
+        for i in xrange(len(mins)):
+            self.particles[i] = np.random.uniform(low=mins[i],
+                                high=maxs[i], size=n_particles)
+
+        self.particles[6:] = np.random.randn(3,n_particles)
 
     def propagate(self, dt):
         # call dynamic model on particles
-        dynam.propogate(self.particles, self.imu, dt)
+        self.particles = dynam.propogate(self.particles, self.imu, dt)
 
-    def localize(self):
-        self.particle_update = False
+    def localize(self, msg):
+        for aruco_m in msg:
+            sig = aruco_m.aruco_id
 
     def run(self):
         rate = rospy.Rate(20)
@@ -56,7 +70,8 @@ class ParticleLocalization:
     def aruco_callback(self, msg)
         # coordinate w/ parker on this one
         self.particle_update = True
-        self.localize()
+        self.localize(msg)
+        self.particle_update = False
 
     def imu_callback(self, msg)
         # store accel & gyro for dynamics

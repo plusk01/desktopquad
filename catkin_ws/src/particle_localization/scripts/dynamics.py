@@ -47,22 +47,21 @@ class ConstVel(object):
         u - kx1 input (acc/gyro)
 
         Outputs:
-        Xp - predictions  
+        Xdot - derivative of the states
         """
-        n = X.shape[0]
+        sh = X.shape[0]
         acc = u[:3]
         gyro = u[3:]
-        Xdot = np.zeros(n)
+        Xdot = np.zeros(sh)
         Xdot[:3] = X[6:9]
-        Xdot[3:6] = gyro
+        Xdot[3:6] = gyro + np.random.multivariate_normal(mean=mu, cov=self.M_gyro)
 
         mu = np.zeros(3)
         # Does it make sense to add in noise during the integration?
+        # Or should this be added on in propogate?
         Xdot[6:9] = acc + np.random.multivariate_normal(mean=mu, cov=self.M_acc) 
-        Xdot[9:12] = np.random.multivariate_naormal(mean=mu, cov=self.M_gyro)
 
         return Xdot
-
 
 
 class QuadRotor(object):
