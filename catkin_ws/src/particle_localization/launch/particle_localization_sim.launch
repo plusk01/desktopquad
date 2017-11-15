@@ -1,0 +1,11 @@
+<launch>
+    <param name="/use_sim_time" value="true"/>
+    <include file="$(find desktopquad_sim)/launch/sim.launch"/>
+
+    <node pkg = "particle_localization" type="particle_localization.py" name="particle_localization" output="screen" />
+    <!--launch-prefix="xterm -e"/> This allows debugging-->
+
+    <rosparam command="load" file="$(find desktopquad)/params/map.yaml" ns="desktopquad" />
+    <rosparam command="load" file="$(find particle_localization)/param/particles.yaml" ns="desktopquad"/>
+
+</launch>  
