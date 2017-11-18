@@ -2,6 +2,7 @@
 <launch>
   <arg name="mav_name"            default="chiny"/>
 
+  <group if="0">
   <!-- Start Gazebo -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="paused"      value="true"/>
@@ -29,6 +30,7 @@
     <arg name="z"           value="1.020"/>
     <arg name="yaw"         value="0"/>
   </include>
+</group>
   
   <group ns="$(arg mav_name)">
 
@@ -37,6 +39,10 @@
 
     <!-- Load common parameters -->
     <rosparam command="load" file="$(find desktopquad)/params/platform.yaml" ns="platform"/>
+    <rosparam command="load" file="$(find desktopquad)/params/map.yaml" ns="mcl/map"/>
+    <rosparam command="load" file="$(find desktopquad)/params/localizer.yaml"/>
+
+    <node pkg="desktopquad" type="mcl" name="mcl" output="screen" />
 
     <!-- Is Flying Publisher -->
     <node pkg="rostopic" type="rostopic" name="is_flying_pub" args="pub is_flying std_msgs/Bool true"/>

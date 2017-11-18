@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Landmarks1
       Splitter Ratio: 0.522222221
     Tree Height: 747
   - Class: rviz/Selection
@@ -117,6 +118,22 @@ Visualization Manager:
       Topic: /chiny/ground_truth/odometry/NED
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Arrow Length: 0.300000012
+      Axes Length: 0.00999999978
+      Axes Radius: 0.00249999994
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.0700000003
+      Head Radius: 0.0299999993
+      Name: Landmarks
+      Shaft Length: 0.230000004
+      Shaft Radius: 0.00999999978
+      Shape: Axes
+      Topic: /chiny/mcl/map
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -141,25 +158,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.16849685
+      Distance: 1.29493642
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: -0.174480051
+        Y: 0.0406923927
+        Z: 0.189897448
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.310398161
+      Pitch: 0.919797421
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.84038782
+      Yaw: 3.7103982
     Saved: ~
 Window Geometry:
   Displays:
@@ -178,4 +195,4 @@ Window Geometry:
     collapsed: true
   Width: 1200
   X: 620
-  Y: 24
+  Y: 34

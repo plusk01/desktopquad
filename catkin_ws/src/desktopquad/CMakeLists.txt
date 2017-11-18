@@ -147,6 +147,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_diff_flat src/diff_flat/node.cpp src/diff_flat/controller.cpp)
 add_executable(${PROJECT_NAME}_tf_frames src/tf_frames/node.cpp src/tf_frames/TFFrames.cpp)
+add_executable(${PROJECT_NAME}_mcl src/mcl/node.cpp src/mcl/mcl.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -155,15 +156,18 @@ add_executable(${PROJECT_NAME}_tf_frames src/tf_frames/node.cpp src/tf_frames/TF
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 set_target_properties(${PROJECT_NAME}_diff_flat PROPERTIES OUTPUT_NAME diff_flat PREFIX "")
 set_target_properties(${PROJECT_NAME}_tf_frames PROPERTIES OUTPUT_NAME tf_frames PREFIX "")
+set_target_properties(${PROJECT_NAME}_mcl PROPERTIES OUTPUT_NAME mcl PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_diff_flat ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${PROJECT_NAME}_tf_frames ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_mcl ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_diff_flat ${catkin_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_tf_frames ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_mcl ${catkin_LIBRARIES})
 
 #############
 ## Install ##
