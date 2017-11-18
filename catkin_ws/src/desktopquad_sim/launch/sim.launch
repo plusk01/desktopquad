@@ -40,7 +40,7 @@
     <!-- Load common parameters -->
     <rosparam command="load" file="$(find desktopquad)/params/platform.yaml" ns="platform"/>
     <rosparam command="load" file="$(find desktopquad)/params/map.yaml" ns="mcl/map"/>
-    <rosparam command="load" file="$(find desktopquad)/params/localizer.yaml"/>
+    <rosparam command="load" file="$(find desktopquad)/params/localizer.yaml" ns="mcl"/>
 
     <node pkg="desktopquad" type="mcl" name="mcl" output="screen" />
 

@@ -8,7 +8,7 @@ MCL::MCL() :
   ros::NodeHandle nh_private("~");
 
   // retrieve parameters from rosparam server
-  params_.M = nh_private.param<int>("mcl/M", 100);
+  params_.M = nh_private.param<int>("M", 100);
 
   // create map representation from rosparam server
   XmlRpc::XmlRpcValue xMap;
@@ -66,8 +66,19 @@ void MCL::create_map(XmlRpc::XmlRpcValue& xMap)
 void MCL::init()
 {
 
-  std::cout << "Monte Carl Localization node started with 100 particles" << std::endl;
+  double xmax = 10;
+  double xmin = 5;
 
+  // Create M particles, uniformly sampled in the platform volume.
+  Eigen::VectorXd xx = VectorXd_rand(params_.M, xmin, xmax);
+  Eigen::VectorXd yy = VectorXd_rand(params_.M, xmin, xmax);
+  Eigen::VectorXd zz = VectorXd_rand(params_.M, xmin, xmax);
+  Eigen::VectorXd RR = VectorXd_rand(params_.M, xmin, xmax);
+  Eigen::VectorXd PP = VectorXd_rand(params_.M, xmin, xmax);
+  Eigen::VectorXd YY = VectorXd_rand(params_.M, xmin, xmax);
+
+
+  ROS_INFO_STREAM("[MCL] Initialized with " << params_.M << " particles.");
 }
 
 // ----------------------------------------------------------------------------
@@ -113,8 +124,8 @@ void MCL::publish_map()
 // ----------------------------------------------------------------------------
 
 // http://wiki.ros.org/bfl/Tutorials/Example%20of%20using%20a%20particle%20filter%20for%20localization%20by%20bfl%20library
-// void PublishParticles()
-// {
+void MCL::publish_particles()
+{
 //   geometry_msgs::PoseArray particles_msg;
 //   particles_msg.header.stamp = ros::Time::now();
 //   particles_msg.header.frame_id = "/map";
@@ -136,6 +147,17 @@ void MCL::publish_map()
 //     particles_msg.poses.insert(particles_msg.poses.begin(), pose);
 //   }
 //   particle_pub.publish(particles_msg);
-// }
+}
+
+// ----------------------------------------------------------------------------
+
+Eigen::VectorXd MCL::VectorXd_rand(int length, double low, double high)
+{
+  Eigen::VectorXd V = 0.5*Eigen::VectorXd::Random(length);
+  V = (high-low)*(Eigen::VectorXd::Constant(length, 0.5) + V);
+  V = (V + Eigen::VectorXd::Constant(length, low));
+
+  return V;
+}
 
 }

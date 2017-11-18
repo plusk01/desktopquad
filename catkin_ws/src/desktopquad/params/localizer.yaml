@@ -1,3 +1,5 @@
-mcl:
-  # number of particles
-  M: 100
+# number of particles
+M: 2
+
+# platform volume (i.e., states/particles outside this volume are invalid)
+# platform_volume:

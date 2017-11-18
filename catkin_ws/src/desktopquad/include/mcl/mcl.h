@@ -3,6 +3,9 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+#include <Eigen/Dense>
 
 #include <ros/ros.h>
 #include <tf/tf.h>
@@ -14,8 +17,9 @@
 
 namespace mcl
 {
+  const unsigned int NSTATE = 6;
 
-  // coordiante/point struct
+  // coordinate/point struct
   typedef struct { double x, y, z; } point_t;
 
   // ========================
@@ -34,6 +38,25 @@ namespace mcl
   typedef struct
   {
 
+    // position
+    double x, y, z;
+
+    // orientation (Euler)
+    double R, P, Y;
+
+  } state_t;
+
+  // ========================
+
+  // Particle struct
+  typedef struct
+  {
+    state_t state;
+
+    // likelihood associated with this
+    // particle for the resampling step.
+    double w;
+
   } particle_t;
 
   // ========================
@@ -43,6 +66,10 @@ namespace mcl
   public:
     MCL();
 
+    // Tick -- this method is the heartbeat of the localization filter.
+    // Every tick the propagation step is performed. If new measurements
+    // are available, they will be used to resample the particles. This 
+    // allows the particles with the closest estimate of reality to live.
     void tick();
 
   private:
@@ -58,8 +85,8 @@ namespace mcl
     tf::TransformListener tf_listener_;
     tf::TransformBroadcaster tf_br_;
 
-    // Paramters
-    bool is_flying_;
+    // Particle filter data members
+    std::vector<particle_t> particles_;
     parameters_t params_;
 
     // Map parameters
@@ -75,6 +102,8 @@ namespace mcl
 
     void publish_map();
     void publish_particles();
+
+    Eigen::VectorXd VectorXd_rand(int length, double low, double high);
   };
 
 }
