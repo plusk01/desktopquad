@@ -9,6 +9,26 @@ MCL::MCL() :
 
   // retrieve parameters from rosparam server
   params_.M = nh_private.param<int>("M", 100);
+  if (!nh_private.getParam("platform_volume/x", params_.valid_x) ||
+      !nh_private.getParam("platform_volume/y", params_.valid_y) ||
+      !nh_private.getParam("platform_volume/z", params_.valid_z) ||
+      !nh_private.getParam("platform_volume/R", params_.valid_R) ||
+      !nh_private.getParam("platform_volume/P", params_.valid_P) ||
+      !nh_private.getParam("platform_volume/Y", params_.valid_Y))
+  {
+    ROS_ERROR("[MCL] Please specify valid platform volume using the rosparam server.");
+    ros::shutdown();
+  }
+  if (!nh_private.getParam("initial_volume/x", params_.initial_x) ||
+      !nh_private.getParam("initial_volume/y", params_.initial_y) ||
+      !nh_private.getParam("initial_volume/z", params_.initial_z) ||
+      !nh_private.getParam("initial_volume/R", params_.initial_R) ||
+      !nh_private.getParam("initial_volume/P", params_.initial_P) ||
+      !nh_private.getParam("initial_volume/Y", params_.initial_Y))
+  {
+    ROS_ERROR("[MCL] Please specify initial particle volume using the rosparam server.");
+    ros::shutdown();
+  }
 
   // create map representation from rosparam server
   XmlRpc::XmlRpcValue xMap;
@@ -22,8 +42,10 @@ MCL::MCL() :
 
   // Connect publishers and subscribers
   map_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("map", 1);
+  particles_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("particles", 1);
 
-  init();
+  // initialize the particles
+  init_particles();
 }
 
 // ----------------------------------------------------------------------------
@@ -31,7 +53,9 @@ MCL::MCL() :
 void MCL::tick()
 {
 
+
   publish_map();
+  publish_particles();
 }
 
 // ----------------------------------------------------------------------------
@@ -63,20 +87,48 @@ void MCL::create_map(XmlRpc::XmlRpcValue& xMap)
 
 // ----------------------------------------------------------------------------
 
-void MCL::init()
+void MCL::init_particles()
 {
 
-  double xmax = 10;
-  double xmin = 5;
+  double xmax = params_.initial_x[0];
+  double xmin = params_.initial_x[1];
 
-  // Create M particles, uniformly sampled in the platform volume.
-  Eigen::VectorXd xx = VectorXd_rand(params_.M, xmin, xmax);
-  Eigen::VectorXd yy = VectorXd_rand(params_.M, xmin, xmax);
-  Eigen::VectorXd zz = VectorXd_rand(params_.M, xmin, xmax);
-  Eigen::VectorXd RR = VectorXd_rand(params_.M, xmin, xmax);
-  Eigen::VectorXd PP = VectorXd_rand(params_.M, xmin, xmax);
-  Eigen::VectorXd YY = VectorXd_rand(params_.M, xmin, xmax);
+  double ymax = params_.initial_y[0];
+  double ymin = params_.initial_y[1];
 
+  double zmax = params_.initial_z[0];
+  double zmin = params_.initial_z[1];
+
+  double Rmax = params_.initial_R[0];
+  double Rmin = params_.initial_R[1];
+
+  double Pmax = params_.initial_P[0];
+  double Pmin = params_.initial_P[1];
+
+  double Ymax = params_.initial_Y[0];
+  double Ymin = params_.initial_Y[1];
+
+  // initialize random number generator
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> xDis(xmin, xmax);
+  std::uniform_real_distribution<> yDis(ymin, ymax);
+  std::uniform_real_distribution<> zDis(zmin, zmax);
+  std::uniform_real_distribution<> RDis(Rmin, Rmax);
+  std::uniform_real_distribution<> PDis(Pmin, Pmax);
+  std::uniform_real_distribution<> YDis(Ymin, Ymax);
+
+  // reserve the memory for M new particles
+  particles_.clear();
+  particles_.reserve(params_.M);
+
+  // Create M particles, uniformly sampled in the initial platform volume.
+  for (int i=0; i<params_.M; i++) {
+    particles_.push_back({
+      {xDis(gen),yDis(gen),zDis(gen),RDis(gen),PDis(gen),YDis(gen)},
+      0
+    });
+  }
 
   ROS_INFO_STREAM("[MCL] Initialized with " << params_.M << " particles.");
 }
@@ -123,41 +175,24 @@ void MCL::publish_map()
 
 // ----------------------------------------------------------------------------
 
-// http://wiki.ros.org/bfl/Tutorials/Example%20of%20using%20a%20particle%20filter%20for%20localization%20by%20bfl%20library
 void MCL::publish_particles()
 {
-//   geometry_msgs::PoseArray particles_msg;
-//   particles_msg.header.stamp = ros::Time::now();
-//   particles_msg.header.frame_id = "/map";
+  geometry_msgs::PoseArray particles_msg;
+  particles_msg.header.stamp = ros::Time::now();
+  particles_msg.header.frame_id = map_frame_;
 
-//   vector<WeightedSample<ColumnVector> >::iterator sample_it;
-//   vector<WeightedSample<ColumnVector> > samples;
+  for (auto& p: particles_) {
+    geometry_msgs::Pose particle;
 
-//   samples = filter->getNewSamples();
+    particle.position.x = p.state.x;
+    particle.position.y = p.state.y;
+    particle.position.z = p.state.z;
+    particle.orientation = tf::createQuaternionMsgFromRollPitchYaw(p.state.R, p.state.P, p.state.Y);
 
-//   for(sample_it = samples.begin(); sample_it<samples.end(); sample_it++)
-//   {
-//     geometry_msgs::Pose pose;
-//     ColumnVector sample = (*sample_it).ValueGet();
+    particles_msg.poses.push_back(particle);
+  }
 
-//     pose.position.x = sample(1);
-//     pose.position.y = sample(2);
-//     pose.orientation.z = sample(3);
-
-//     particles_msg.poses.insert(particles_msg.poses.begin(), pose);
-//   }
-//   particle_pub.publish(particles_msg);
-}
-
-// ----------------------------------------------------------------------------
-
-Eigen::VectorXd MCL::VectorXd_rand(int length, double low, double high)
-{
-  Eigen::VectorXd V = 0.5*Eigen::VectorXd::Random(length);
-  V = (high-low)*(Eigen::VectorXd::Constant(length, 0.5) + V);
-  V = (V + Eigen::VectorXd::Constant(length, low));
-
-  return V;
+  particles_pub_.publish(particles_msg);
 }
 
 }

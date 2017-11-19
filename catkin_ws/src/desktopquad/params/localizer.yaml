@@ -1,5 +1,23 @@
 # number of particles
-M: 2
+M: 100
 
 # platform volume (i.e., states/particles outside this volume are invalid)
-# platform_volume:
+platform_volume:
+  x: [-0.150, 0.150] # platform width
+  y: [-0.175, 0.175] # platform length
+  z: [ 0.000, 0.390] # rod length (height)
+  R: [-0.875, 0.875] # -50 to 50 degrees
+  P: [-0.875, 0.875] # -50 to 50 degrees
+  Y: [-3.142, 3.142]
+
+# When the particles are first initialized, they will be uniformly distributed
+# within the `initial_volume` bounding box. Specifically, the z-component of
+# particles do not need a large range since we assume that MCL starts when the
+# quadrotor is not flying and is level on the base of the platform.
+initial_volume:
+  x: [-0.150, 0.150]
+  y: [-0.175, 0.175]
+  z: [ 0.350, 0.390]
+  R: [-0.250, 0.250] # -15 to 15 degrees
+  P: [-0.250, 0.250] # -15 to 15 degrees
+  Y: [-3.142, 3.142]

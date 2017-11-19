@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <random>
 
 #include <Eigen/Dense>
 
@@ -29,6 +30,14 @@ namespace mcl
   {
     // number of particles
     int M;
+
+    // initial volume
+    std::vector<double> valid_x, valid_y, valid_z;
+    std::vector<double> valid_R, valid_P, valid_Y;
+
+    // initial volume
+    std::vector<double> initial_x, initial_y, initial_z;
+    std::vector<double> initial_R, initial_P, initial_Y;
 
   } parameters_t;
 
@@ -80,6 +89,7 @@ namespace mcl
     ros::Subscriber state_sub_;
     ros::Subscriber is_flying_sub_;
     ros::Publisher map_pub_;
+    ros::Publisher particles_pub_;
 
     // ROS tf listener and broadcaster
     tf::TransformListener tf_listener_;
@@ -94,16 +104,14 @@ namespace mcl
     std::unordered_map<int, point_t> landmarks_;
 
     // methods
-    void init();
     void sample_motion_model();
     void perceptual_model();
 
-    void create_map(XmlRpc::XmlRpcValue& map);
+    void create_map(XmlRpc::XmlRpcValue& xMap);
+    void init_particles();
 
     void publish_map();
     void publish_particles();
-
-    Eigen::VectorXd VectorXd_rand(int length, double low, double high);
   };
 
 }
