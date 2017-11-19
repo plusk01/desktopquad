@@ -1,5 +1,5 @@
 # number of particles
-M: 1
+M: 100
 
 # platform volume (i.e., states/particles outside this volume are invalid)
 platform_volume:
@@ -21,3 +21,19 @@ initial_volume:
   R: [-0.250, 0.250] # -15 to 15 degrees
   P: [-0.250, 0.250] # -15 to 15 degrees
   Y: [-3.142, 3.142]
+
+# motion model
+#   0 - stochastically-driven nearly-constant velocity
+#
+#   (defn come from `MotionModels` enum in motion_model.h)
+motion_model: 0
+
+# parameters for the SDNCV motion model
+sdncv:
+  # standard deviation parameters for linear and angular acceleration
+  x:  0.01
+  y:  0.01
+  z:  0.01
+  ax: 0.001
+  ay: 0.001
+  az: 0.001

@@ -30,6 +30,18 @@ MCL::MCL() :
     ros::shutdown();
   }
 
+  // create the specified motion model
+  int mm = nh_private.param<int>("motion_model", MM_SDNCV);
+  if (mm == MM_SDNCV) {
+    double x = nh_private.param<double>("sdncv/x", 0.01);
+    double y = nh_private.param<double>("sdncv/y", 0.01);
+    double z = nh_private.param<double>("sdncv/z", 0.01);
+    double ax = nh_private.param<double>("sdncv/ax", 0.001);
+    double ay = nh_private.param<double>("sdncv/ay", 0.001);
+    double az = nh_private.param<double>("sdncv/az", 0.001);
+    mm_ = std::make_shared<SDNCV>(x,y,z,ax,ay,az);
+  }
+
   // create map representation from rosparam server
   XmlRpc::XmlRpcValue xMap;
   if (nh_private.getParam("map", xMap)) {
@@ -53,6 +65,7 @@ MCL::MCL() :
 
 void MCL::tick()
 {
+  double dt = 1/100.0;
 
   // Keep track of particles that are propagated forward
   // std::vector<ParticlePtr> Xbar;
@@ -60,7 +73,7 @@ void MCL::tick()
 
   for (auto& p: particles_) {
     // Prediction
-    sample_motion_model(p);
+    mm_->sample(p, dt);
   }
 
 
@@ -154,21 +167,6 @@ void MCL::init_particles()
   }
 
   ROS_INFO_STREAM("[MCL] Initialized with " << params_.M << " particles.");
-}
-
-// ----------------------------------------------------------------------------
-
-void MCL::sample_motion_model(ParticlePtr& p)
-{
-
-  double dt = 1/100.0;
-
-  Eigen::Vector3d tmp;
-  tmp << 0.0001, 0.0005, 0;
-
-  // position
-  p->pos += p->quat.toRotationMatrix() * tmp;
-
 }
 
 // ----------------------------------------------------------------------------

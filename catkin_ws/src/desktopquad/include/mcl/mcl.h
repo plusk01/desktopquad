@@ -22,6 +22,8 @@
 #include "aruco_localization/MarkerMeasurementArray.h"
 
 #include "mcl/particle.h"
+#include "mcl/motionmodels/motion_model.h"
+#include "mcl/motionmodels/sdncv.h"
 
 namespace mcl
 {
@@ -86,8 +88,10 @@ namespace mcl
     std::string working_frame_; // this is the frame that MCL is performed in (aruco)
     std::unordered_map<int, point_t> landmarks_;
 
+    // motion model
+    MotionModelPtr mm_;
+
     // methods
-    void sample_motion_model(ParticlePtr& p);
     void perceptual_model();
 
     void create_map(XmlRpc::XmlRpcValue& xMap);
