@@ -19,7 +19,9 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   nav_msgs
   rosflight_msgs
+  aruco_localization
   tf
+  tf_conversions
   eigen_conversions
   dynamic_reconfigure
 )

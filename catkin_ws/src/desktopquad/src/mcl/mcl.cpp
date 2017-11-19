@@ -43,6 +43,7 @@ MCL::MCL() :
   // Connect publishers and subscribers
   map_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("map", 1);
   particles_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("particles", 1);
+  meas_sub_ = nh_private.subscribe("measurements", 1, &MCL::measurements_cb, this);
 
   // initialize the particles
   init_particles();
@@ -53,6 +54,19 @@ MCL::MCL() :
 void MCL::tick()
 {
 
+  // Keep track of particles that are propagated forward
+  // std::vector<ParticlePtr> Xbar;
+  // Xbar.reserve(params_.M);
+
+  for (auto& p: particles_) {
+    // Prediction
+    sample_motion_model(p);
+  }
+
+
+  //
+  // Publish the MCL data
+  //
 
   publish_map();
   publish_particles();
@@ -62,6 +76,13 @@ void MCL::tick()
 // Private Methods
 // ----------------------------------------------------------------------------
 
+void MCL::measurements_cb(const aruco_localization::MarkerMeasurementArrayConstPtr& msg)
+{
+
+}
+
+// ----------------------------------------------------------------------------
+
 void MCL::create_map(XmlRpc::XmlRpcValue& xMap)
 {
   ROS_INFO_STREAM("[MCL] Using ArUco map `" << xMap["name"] << "` with "
@@ -69,7 +90,7 @@ void MCL::create_map(XmlRpc::XmlRpcValue& xMap)
           << xMap["frame_id"] << "` coordinate frame.");
 
   // set the coordinate frame that the map landmarks are defined in
-  map_frame_ = (std::string)xMap["frame_id"];
+  working_frame_ = (std::string)xMap["frame_id"];
 
   for (int i=0; i<xMap["landmarks"].size(); i++) {
     // Grab the XML RPC version of this landmark (struct) in the list
@@ -124,10 +145,12 @@ void MCL::init_particles()
 
   // Create M particles, uniformly sampled in the initial platform volume.
   for (int i=0; i<params_.M; i++) {
-    particles_.push_back({
-      {xDis(gen),yDis(gen),zDis(gen),RDis(gen),PDis(gen),YDis(gen)},
-      0
-    });
+    particles_.emplace_back(std::make_shared<Particle>(
+        // position (in working frame)
+        xDis(gen), yDis(gen), zDis(gen),
+        // orientation (from working to measurement frame)
+        RDis(gen),PDis(gen),YDis(gen)
+      ));
   }
 
   ROS_INFO_STREAM("[MCL] Initialized with " << params_.M << " particles.");
@@ -135,8 +158,16 @@ void MCL::init_particles()
 
 // ----------------------------------------------------------------------------
 
-void MCL::sample_motion_model()
+void MCL::sample_motion_model(ParticlePtr& p)
 {
+
+  double dt = 1/100.0;
+
+  Eigen::Vector3d tmp;
+  tmp << 0.0001, 0.0005, 0;
+
+  // position
+  p->pos += p->quat.toRotationMatrix() * tmp;
 
 }
 
@@ -153,7 +184,7 @@ void MCL::publish_map()
 {
   geometry_msgs::PoseArray map_msg;
   map_msg.header.stamp = ros::Time::now();
-  map_msg.header.frame_id = map_frame_;
+  map_msg.header.frame_id = working_frame_;
 
 
   for (auto& l: landmarks_) {
@@ -179,15 +210,15 @@ void MCL::publish_particles()
 {
   geometry_msgs::PoseArray particles_msg;
   particles_msg.header.stamp = ros::Time::now();
-  particles_msg.header.frame_id = map_frame_;
+  particles_msg.header.frame_id = working_frame_;
 
   for (auto& p: particles_) {
     geometry_msgs::Pose particle;
 
-    particle.position.x = p.state.x;
-    particle.position.y = p.state.y;
-    particle.position.z = p.state.z;
-    particle.orientation = tf::createQuaternionMsgFromRollPitchYaw(p.state.R, p.state.P, p.state.Y);
+    particle.position.x = p->pos(0);
+    particle.position.y = p->pos(1);
+    particle.position.z = p->pos(2);
+    tf::quaternionEigenToMsg(p->quat, particle.orientation);
 
     particles_msg.poses.push_back(particle);
   }

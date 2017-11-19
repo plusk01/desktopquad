@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <queue>
 #include <random>
 
 #include <Eigen/Dense>
@@ -14,7 +15,13 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 
+#include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
+
 #include <geometry_msgs/PoseArray.h>
+#include "aruco_localization/MarkerMeasurementArray.h"
+
+#include "mcl/particle.h"
 
 namespace mcl
 {
@@ -43,33 +50,6 @@ namespace mcl
 
   // ========================
 
-  // Particle struct
-  typedef struct
-  {
-
-    // position
-    double x, y, z;
-
-    // orientation (Euler)
-    double R, P, Y;
-
-  } state_t;
-
-  // ========================
-
-  // Particle struct
-  typedef struct
-  {
-    state_t state;
-
-    // likelihood associated with this
-    // particle for the resampling step.
-    double w;
-
-  } particle_t;
-
-  // ========================
-
   class MCL
   {
   public:
@@ -86,29 +66,34 @@ namespace mcl
     ros::NodeHandle nh_;
 
     // Publishers and Subscribers
-    ros::Subscriber state_sub_;
-    ros::Subscriber is_flying_sub_;
     ros::Publisher map_pub_;
     ros::Publisher particles_pub_;
+    ros::Subscriber meas_sub_;
+    ros::Subscriber is_flying_sub_;
 
     // ROS tf listener and broadcaster
     tf::TransformListener tf_listener_;
     tf::TransformBroadcaster tf_br_;
 
+    // Measurement queues
+    std::queue<aruco_localization::MarkerMeasurementArray> landmark_measurements_;
+
     // Particle filter data members
-    std::vector<particle_t> particles_;
+    std::vector<ParticlePtr> particles_;
     parameters_t params_;
 
     // Map parameters
-    std::string map_frame_;
+    std::string working_frame_; // this is the frame that MCL is performed in (aruco)
     std::unordered_map<int, point_t> landmarks_;
 
     // methods
-    void sample_motion_model();
+    void sample_motion_model(ParticlePtr& p);
     void perceptual_model();
 
     void create_map(XmlRpc::XmlRpcValue& xMap);
     void init_particles();
+
+    void measurements_cb(const aruco_localization::MarkerMeasurementArrayConstPtr& msg);
 
     void publish_map();
     void publish_particles();
