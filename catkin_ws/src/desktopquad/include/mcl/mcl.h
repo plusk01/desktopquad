@@ -27,8 +27,6 @@
 
 namespace mcl
 {
-  const unsigned int NSTATE = 6;
-
   // coordinate/point struct
   typedef struct { double x, y, z; } point_t;
 

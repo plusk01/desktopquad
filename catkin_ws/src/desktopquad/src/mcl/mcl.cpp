@@ -39,7 +39,7 @@ MCL::MCL() :
     double ax = nh_private.param<double>("sdncv/ax", 0.001);
     double ay = nh_private.param<double>("sdncv/ay", 0.001);
     double az = nh_private.param<double>("sdncv/az", 0.001);
-    mm_ = std::make_shared<SDNCV>(x,y,z,ax,ay,az);
+    mm_ = std::make_shared<SDNCV>(x, y, z, ax, ay, az);
   }
 
   // create map representation from rosparam server
@@ -65,7 +65,6 @@ MCL::MCL() :
 
 void MCL::tick()
 {
-
   //
   // Loop time management
   //
@@ -90,7 +89,6 @@ void MCL::tick()
     // Prediction
     mm_->sample(p, dt);
   }
-
 
   //
   // Publish the MCL data
