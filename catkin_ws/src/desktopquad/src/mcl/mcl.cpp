@@ -65,11 +65,26 @@ MCL::MCL() :
 
 void MCL::tick()
 {
-  double dt = 1/100.0;
 
-  // Keep track of particles that are propagated forward
-  // std::vector<ParticlePtr> Xbar;
-  // Xbar.reserve(params_.M);
+  //
+  // Loop time management
+  //
+
+  static double now_d1 = 0;
+
+  if (now_d1 == 0) {
+    now_d1 = ros::Time::now().toSec();
+    return; // since we can't know the dt yet
+  }
+
+  // Use the time from the last loop to calcualte dt
+  double now = ros::Time::now().toSec();
+  double dt = now - now_d1;
+  now_d1 = now;
+
+  //
+  // Particle filter algorithm
+  //
 
   for (auto& p: particles_) {
     // Prediction

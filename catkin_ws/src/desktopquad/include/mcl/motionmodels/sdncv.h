@@ -2,7 +2,8 @@
 /**
 Stochastically-Driven Nearly-Constant Velocity motion model
 
-Based on the motion model used in 'MonoSLAM', Davison et al., 2007.
+Based on the motion model used in:
+  'MonoSLAM: real-time single camera SLAM', Davison et al., 2007.
 */
 
 #include "mcl/motionmodels/motion_model.h"
@@ -27,15 +28,29 @@ namespace mcl {
       alpha_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, alpha_var.asDiagonal(), true);
     }
 
+    // See eqs (3) and (4) of Davison2007
     void sample(ParticlePtr& p, double dt) override
     {
-      Eigen::Vector3d V = accel_->samples(1)*dt;
+      // Sample the random variables to create velocity inputs
+      Eigen::Vector3d V     = accel_->samples(1)*dt;
+      Eigen::Vector3d Omega = alpha_->samples(1)*dt;
 
-      // position propagation
-      p->pos += p->quat.toRotationMatrix() * (p->vel + V)*dt;
-
-      // velocity propagation
+      // velocity (measurement frame)
       p->vel += V;
+
+      // angular velocity (measurement frame)
+      p->omega += Omega;
+
+      // position (working frame)
+      p->pos += p->quat.toRotationMatrix() * p->vel*dt;
+
+      // orientation (working to measurement frame)
+      Eigen::Quaterniond qdot =  p->quat * Eigen::Quaterniond(0, p->omega(0)*dt, p->omega(1)*dt, p->omega(2)*dt);
+      p->quat.w() += 0.5*qdot.w();
+      p->quat.x() += 0.5*qdot.x();
+      p->quat.y() += 0.5*qdot.y();
+      p->quat.z() += 0.5*qdot.z();
+      p->quat.normalize();
     }
 
   private:

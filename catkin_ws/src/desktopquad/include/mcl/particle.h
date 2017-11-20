@@ -12,7 +12,6 @@ namespace mcl {
     Particle(double x, double y, double z, double R, double P, double Y)
     {
       pos = Eigen::Vector3d(x, y, z);
-      vel = Eigen::Vector3d(0, 0, 0);
 
       // Build quaternion from RPY
       // Tait-Bryan (3-2-1;Z-Y-X) sequence common in aerospace
@@ -21,6 +20,7 @@ namespace mcl {
               * Eigen::AngleAxisd(P, Eigen::Vector3d::UnitY())
               * Eigen::AngleAxisd(R, Eigen::Vector3d::UnitX());
 
+      vel = Eigen::Vector3d(0, 0, 0);
       omega = Eigen::Vector3d(0, 0, 0);
 
       w = 0;
@@ -28,10 +28,10 @@ namespace mcl {
 
     // position (in working frame)
     Eigen::Vector3d pos;
-    // velocity (in measurement frame)
-    Eigen::Vector3d vel;
     // orientation (from working to measurement frame)
     Eigen::Quaterniond quat;
+    // velocity (in measurement frame)
+    Eigen::Vector3d vel;
     // angular rates (in measurement frame)
     Eigen::Vector3d omega;
 
