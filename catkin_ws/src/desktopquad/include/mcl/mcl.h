@@ -20,6 +20,7 @@
 
 #include <geometry_msgs/PoseArray.h>
 #include "aruco_localization/MarkerMeasurementArray.h"
+#include "aruco_localization/MarkerMeasurement.h"
 
 #include "mcl/particle.h"
 #include "mcl/motionmodels/motion_model.h"
@@ -76,7 +77,7 @@ namespace mcl
     tf::TransformBroadcaster tf_br_;
 
     // Measurement queues
-    std::queue<aruco_localization::MarkerMeasurementArray> landmark_measurements_;
+    std::queue<aruco_localization::MarkerMeasurementArrayConstPtr> landmark_measurements_;
 
     // Particle filter data members
     std::vector<ParticlePtr> particles_;
@@ -90,7 +91,7 @@ namespace mcl
     MotionModelPtr mm_;
 
     // methods
-    void perceptual_model();
+    double perceptual_model(const aruco_localization::MarkerMeasurement& z, ParticlePtr& p);
 
     void create_map(XmlRpc::XmlRpcValue& xMap);
     void init_particles();

@@ -88,6 +88,22 @@ void MCL::tick()
   for (auto& p: particles_) {
     // Prediction
     mm_->sample(p, dt);
+
+    // If there are measurements to process
+    while (landmark_measurements_.size() > 0) {
+      // Get the current landmark measurements (this is an array of marker measurements)
+      auto Z = landmark_measurements_.front();
+
+      // For each of the marker measurements: How good is this particle?
+      // Aggregate the likelihood of this particle having seen all of these measurements
+      p->w = 1;
+      for (const auto &z : Z->poses) {
+        p->w *= perceptual_model(z, p);
+      }
+
+      // Destroy the element on the front of the queue
+      landmark_measurements_.pop();
+    }
   }
 
   //
@@ -104,7 +120,7 @@ void MCL::tick()
 
 void MCL::measurements_cb(const aruco_localization::MarkerMeasurementArrayConstPtr& msg)
 {
-
+  landmark_measurements_.push(msg);
 }
 
 // ----------------------------------------------------------------------------
@@ -184,9 +200,15 @@ void MCL::init_particles()
 
 // ----------------------------------------------------------------------------
 
-void MCL::perceptual_model()
+double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, ParticlePtr& p)
 {
+
+  double q = 1;
+
   
+  
+  // return p(z|x,m)
+  return q;
 }
 
 // ----------------------------------------------------------------------------
