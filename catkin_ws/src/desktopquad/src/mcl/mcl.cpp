@@ -200,15 +200,84 @@ void MCL::init_particles()
 
 // ----------------------------------------------------------------------------
 
+// This method returns the likelihood of a landmark measurement: p(z|x,m)
 double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, ParticlePtr& p)
 {
 
-  double q = 1;
+  //
+  // Data preparation
+  //
 
-  
-  
-  // return p(z|x,m)
-  return q;
+  // Make sure that the received landmark measurement
+  // corresponds to a landmark that exists in the map.
+  auto search = landmarks_.find(z.aruco_id);
+  if (search == landmarks_.end()) {
+    ROS_ERROR_STREAM("[MCL] Landmark (" << z.aruco_id << ") does not exist in map.");
+    return 0;
+  }
+
+  // form vector of landmark position (in the working frame)
+  Eigen::Vector3d L_k;
+  L_k << search->second.x, search->second.y, search->second.z;
+
+  // extract Euler (3-2-1) angles from the landmark measurement
+  Eigen::Quaterniond q;
+  tf::quaternionMsgToEigen(z.orientation, q);
+  auto euler = q.toRotationMatrix().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
+
+  // form the measurement vector
+  Eigen::Matrix<double,6,1> zvec;
+  zvec << z.position.x, z.position.y, z.position.z, euler(2), euler(1), euler(0);
+
+  //
+  // Measurement model
+  //
+
+  // given the state, what should the measurement be?
+  Eigen::Vector3d zhat_pos = p->quat.toRotationMatrix() * (p->pos - L_k);
+  Eigen::Vector3d zhat_eul = p->quat.toRotationMatrix().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
+
+  // combine the position and orientation components
+  Eigen::Matrix<double,6,1> zhat;
+  zhat << zhat_pos(0), zhat_pos(1), zhat_pos(2), zhat_eul(2), zhat_eul(1), zhat_eul(0);
+
+  //
+  // Calculate likelihood:p(z|x,m)
+  //
+
+  // compute the residual
+  Eigen::Matrix<double,6,1> rvec = zvec - zhat;
+
+  // build noise
+  Eigen::Matrix<double,6,1> R_var;
+  R_var << std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
+
+  return mvnpdf(zvec, zhat, R_var.asDiagonal());
+}
+
+// ----------------------------------------------------------------------------
+
+double MCL::mvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma)
+{
+  // error checking
+  if ((x.size() != mu.size()) || (x.size() != Sigma.rows())) {
+    ROS_ERROR("[MCL::mvnpdf] x and mu must be the same size!");
+    return 0;
+  }
+  if (Sigma.rows() != Sigma.cols()) {
+    ROS_ERROR("[MCL::mvnpdf] Sigma must be square!");
+    return 0;
+  }
+
+  // Normalization constant for a multivariate Gaussian pdf
+  int k = Sigma.rows();
+  double eta = 1.0/std::sqrt( std::pow(2*M_PI,k) * Sigma.determinant() );
+
+  // Kernel of a gaussian
+  Eigen::VectorXd residual = x - mu;
+  double gaussian = std::exp( -0.5 * residual.transpose() * Sigma.inverse() * residual );
+
+  return eta*gaussian;
 }
 
 // ----------------------------------------------------------------------------

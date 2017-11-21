@@ -100,6 +100,8 @@ namespace mcl
 
     void publish_map();
     void publish_particles();
+
+    double mvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma);
   };
 
 }
