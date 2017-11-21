@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 
 # I should probably have some inheritance stuff going on here
-class ConstVel(object):
+class Mechanized(object):
     """
     Class to implement const velocity motion model with acc/gyro measurements
     Note: This class is intended to be implemented with particle-based approaches,
@@ -37,6 +37,14 @@ class ConstVel(object):
         k4 = self.dynamics(X + dt*k3, u, dt)
 
         Xp = X + (dt/6)*(k1 + 2*k2 + 2*k3 + k4)
+
+        # Add noise
+        Xp[:3] += np.random.multivariate_normal(np.zeros(self.Q_pos.shape[0]), self.Q_pos, size=X.shape[1]).T
+        Xp[6:9] += np.random.multivariate_normal(np.zeros(self.Q_att.shape[0]), self.Q_att, size=X.shape[1]).T
+
+        # Since we measure angular velocity directly, throw that into the state
+        gyro = u[3:]
+        Xp[9:12] = (gyro)[:,np.newaxis]
         return Xp
 
     def dynamics(self, X, u, dt):
@@ -57,9 +65,9 @@ class ConstVel(object):
         cphi = np.cos(X[6])
         sphi = np.sin(X[6])
         cth = np.cos(X[7])
-        sth = np.cos(X[7])
+        sth = np.sin(X[7])
         cpsi = np.cos(X[8])
-        spsi = np.cos(X[8])
+        spsi = np.sin(X[8])
 
         u = X[3]
         v = X[4]
@@ -92,11 +100,10 @@ class ConstVel(object):
         mu = np.zeros(3)
         Xdot = np.zeros(sh)
         Xdot[:3] = np.einsum('ijk,jk->ik',A,X[3:6])
-        Xdot[3] = acc[0] + q*w - r*v + g*sth
-        Xdot[4] = acc[1] + r*u - p*w - g*cth*sphi
-        Xdot[5] = acc[2] + p*v - q*u - g*cth*cphi
-        Xdot[6:9] = np.einsum('ijk,jk->ik',B,X[9:12])
-        Xdot[9:] = (gyro)[:,np.newaxis]
+        Xdot[3] = acc[0] - q*w + r*v - g*sth
+        Xdot[4] = acc[1] - r*u + p*w + g*cth*sphi
+        Xdot[5] = acc[2] - p*v + q*u + g*cth*cphi
+        Xdot[6:9] = np.einsum('ijk,jk->ik',B,gyro[:,np.newaxis])
 
         return Xdot
 
