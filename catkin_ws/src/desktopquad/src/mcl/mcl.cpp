@@ -31,7 +31,7 @@ MCL::MCL() :
   }
 
   // create the specified motion model
-  int mm = nh_private.param<int>("motion_model", MM_SDNCV);
+  int mm = nh_private.param<int>("motion_model", MM_MECH);
   if (mm == MM_SDNCV) {
     double x = nh_private.param<double>("sdncv/x", 0.01);
     double y = nh_private.param<double>("sdncv/y", 0.01);
@@ -40,6 +40,16 @@ MCL::MCL() :
     double ay = nh_private.param<double>("sdncv/ay", 0.001);
     double az = nh_private.param<double>("sdncv/az", 0.001);
     mm_ = std::make_shared<SDNCV>(x, y, z, ax, ay, az);
+  }
+  if (mm == MM_MECH) {
+    double x = nh_private.param<double>("sdncv/x", 0.01);
+    double y = nh_private.param<double>("sdncv/y", 0.01);
+    double z = nh_private.param<double>("sdncv/z", 0.01);
+    double ax = nh_private.param<double>("sdncv/ax", 0.001);
+    double ay = nh_private.param<double>("sdncv/ay", 0.001);
+    double az = nh_private.param<double>("sdncv/az", 0.001);
+    mm_ = std::make_shared<MECH>(x, y, z, ax, ay, az);
+    imu_sub_ = nh_private.subscribe("chiny/imu", 1, &MCL::imu_cb, this);
   }
 
   // create map representation from rosparam server
@@ -121,6 +131,13 @@ void MCL::tick()
 void MCL::measurements_cb(const aruco_localization::MarkerMeasurementArrayConstPtr& msg)
 {
   landmark_measurements_.push(msg);
+}
+
+void MCL::imu_cb(const sensor_msgs::ImuConstPtr&  msg)
+{
+    std::shared_ptr<MECH> mech_mm_ = std::static_pointer_cast<MECH>(mm_);
+    mech_mm_->acc << msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z;
+    mech_mm_->gyro << msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z;
 }
 
 // ----------------------------------------------------------------------------

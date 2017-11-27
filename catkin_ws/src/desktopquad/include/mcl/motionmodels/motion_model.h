@@ -10,7 +10,8 @@
 namespace mcl {
 
   enum MotionModels {
-    MM_SDNCV
+    MM_SDNCV,
+    MM_MECH
   };
 
   class MotionModel

@@ -19,12 +19,14 @@
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseArray.h>
+#include <sensor_msgs/Imu.h>
 #include "aruco_localization/MarkerMeasurementArray.h"
 #include "aruco_localization/MarkerMeasurement.h"
 
 #include "mcl/particle.h"
 #include "mcl/motionmodels/motion_model.h"
 #include "mcl/motionmodels/sdncv.h"
+#include "mcl/motionmodels/mech.h"
 
 namespace mcl
 {
@@ -71,6 +73,7 @@ namespace mcl
     ros::Publisher particles_pub_;
     ros::Subscriber meas_sub_;
     ros::Subscriber is_flying_sub_;
+    ros::Subscriber imu_sub_;
 
     // ROS tf listener and broadcaster
     tf::TransformListener tf_listener_;
@@ -97,6 +100,7 @@ namespace mcl
     void init_particles();
 
     void measurements_cb(const aruco_localization::MarkerMeasurementArrayConstPtr& msg);
+    void imu_cb(const sensor_msgs::ImuConstPtr&  msg);
 
     void publish_map();
     void publish_particles();
