@@ -85,6 +85,9 @@ void MCL::tick()
   // Particle filter algorithm
   //
 
+  // store the sum of all probability weights to normalize with
+  double w_sum = 0;
+
   for (auto& p: particles_) {
     // Prediction
     mm_->sample(p, dt);
@@ -101,10 +104,16 @@ void MCL::tick()
         p->w += perceptual_model(z, p);
       }
 
+      // Undo log-space stuff
+      p->w = std::exp(p->w);
+      w_sum += p->w;
+
       // Destroy the element on the front of the queue
       landmark_measurements_.pop();
     }
   }
+
+  resample(w_sum);
 
   //
   // Publish the MCL data
@@ -253,6 +262,48 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   R_var << std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
 
   return logmvnpdf(zvec, zhat, R_var.asDiagonal());
+}
+
+// ----------------------------------------------------------------------------
+
+void MCL::resample(double w_norm)
+{
+
+  // How many particles are there?
+  int M = particles_.size();
+
+  // sample a single uniform random number \in [0 1/M]
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(0, 1.0/M);
+  double r = dis(gen);
+
+  // initialize the selected particle and its (normalized) weight
+  int i = 0;
+  double c = (particles_[0]->w/w_norm);
+
+  std::vector<ParticlePtr> particles;
+  for (int m=0; m<M; m++) {
+
+    // The current location of the 'pointer'
+    double U = r + m/M;
+
+    // Make sure that we are in the correct bin
+    while (U > c) {
+      i++;
+      c += (particles_[i]->w/w_norm);
+    }
+
+    std::cout << "Selecting particle " << i << std::endl;
+
+    // Add a copy of the ith particle to the new set
+    particles.push_back(std::make_shared<Particle>(*particles_[i]));
+  }
+
+  std::cout << std::endl << std::endl;
+
+  // Keep the newly resampled particles
+  particles_.swap(particles);
 }
 
 // ----------------------------------------------------------------------------

@@ -91,6 +91,7 @@ namespace mcl
     MotionModelPtr mm_;
 
     // methods
+    void resample(double w_norm);
     double perceptual_model(const aruco_localization::MarkerMeasurement& z, ParticlePtr& p);
 
     void create_map(XmlRpc::XmlRpcValue& xMap);
