@@ -42,6 +42,8 @@ namespace mcl {
       p->omega += Omega;
 
       // position (working frame)
+      // Note: Eigen uses active rotations, so this line should technically read:
+      //    p->quat.inverse().toRotationMatrix().transpose() * p->vel*dt
       p->pos += p->quat.toRotationMatrix() * p->vel*dt;
 
       // orientation (working to measurement frame)
