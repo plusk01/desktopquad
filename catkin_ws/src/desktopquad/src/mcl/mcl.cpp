@@ -96,9 +96,9 @@ void MCL::tick()
 
       // For each of the marker measurements: How good is this particle?
       // Aggregate the likelihood of this particle having seen all of these measurements
-      p->w = 1;
+      p->w = 0;
       for (const auto &z : Z->poses) {
-        p->w *= perceptual_model(z, p);
+        p->w += perceptual_model(z, p);
       }
 
       // Destroy the element on the front of the queue
@@ -252,7 +252,32 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   Eigen::Matrix<double,6,1> R_var;
   R_var << std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
 
-  return mvnpdf(zvec, zhat, R_var.asDiagonal());
+  return logmvnpdf(zvec, zhat, R_var.asDiagonal());
+}
+
+// ----------------------------------------------------------------------------
+
+double MCL::logmvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma)
+{
+  // error checking
+  if ((x.size() != mu.size()) || (x.size() != Sigma.rows())) {
+    ROS_ERROR("[MCL::logmvnpdf] x and mu must be the same size!");
+    return 0;
+  }
+  if (Sigma.rows() != Sigma.cols()) {
+    ROS_ERROR("[MCL::logmvnpdf] Sigma must be square!");
+    return 0;
+  }
+
+  // Dimension of mvn
+  int k = Sigma.rows();
+
+  // Kernel of a gaussian
+  Eigen::VectorXd residual = x - mu;
+  double mahal_sq = residual.transpose() * Sigma.inverse() * residual;
+
+  // Log-likelihood function (natural log of a mvn pdf)
+  return -0.5*( std::log(Sigma.determinant()) + mahal_sq + k*std::log(2*M_PI) );
 }
 
 // ----------------------------------------------------------------------------
