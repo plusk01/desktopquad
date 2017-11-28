@@ -49,6 +49,8 @@
       <remap from="mcl/imu/gyro_bias" to="imu/gyro_bias" />
     </node>
 
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find desktopquad)/rviz/default.rviz" />
+
     <!-- Is Flying Publisher -->
     <node pkg="rostopic" type="rostopic" name="is_flying_pub" args="pub is_flying std_msgs/Bool true"/>
 

@@ -41,12 +41,12 @@ MCL::MCL() :
     double az = nh_private.param<double>("sdncv/az", 0.001);
     mm_ = std::make_shared<SDNCV>(x, y, z, ax, ay, az);
   } else if (mm == MM_MECH) {
-    double x = nh_private.param<double>("sdncv/x", 0.01);
-    double y = nh_private.param<double>("sdncv/y", 0.01);
-    double z = nh_private.param<double>("sdncv/z", 0.01);
-    double ax = nh_private.param<double>("sdncv/ax", 0.001);
-    double ay = nh_private.param<double>("sdncv/ay", 0.001);
-    double az = nh_private.param<double>("sdncv/az", 0.001);
+    double x = nh_private.param<double>("mech/x", 0.1);
+    double y = nh_private.param<double>("mech/y", 0.1);
+    double z = nh_private.param<double>("mech/z", 0.1);
+    double ax = nh_private.param<double>("mech/ax", 0.1);
+    double ay = nh_private.param<double>("mech/ay", 0.1);
+    double az = nh_private.param<double>("mech/az", 0.1);
     mm_ = std::make_shared<MECH>(x, y, z, ax, ay, az);
     imu_sub_ = nh_private.subscribe("imu/data", 1, &MCL::imu_cb, this);
     acc_b_sub_ = nh_private.subscribe("imu/acc_bias", 1, &MCL::acc_b_cb, this);
@@ -97,34 +97,45 @@ void MCL::tick()
   //
 
   // store the sum of all probability weights to normalize with
-  double w_sum = 0;
+  double w_max = std::numeric_limits<double>::lowest();
 
   for (auto& p: particles_) {
     // Prediction
     mm_->sample(p, dt);
 
     // If there are measurements to process
-    while (landmark_measurements_.size() > 0) {
+    // while (landmark_measurements_.size() > 0) {
+    for (auto& Z : landmark_measurements_) {
       // Get the current landmark measurements (this is an array of marker measurements)
-      auto Z = landmark_measurements_.front();
+      // auto Z = landmark_measurements_.front();
 
       // For each of the marker measurements: How good is this particle?
       // Aggregate the likelihood of this particle having seen all of these measurements
       p->w = 0;
-      for (const auto &z : Z->poses) {
+      for (const auto& z : Z->poses) {
         p->w += perceptual_model(z, p);
+        // break;
       }
-
-      // Undo log-space stuff
-      p->w = std::exp(p->w);
-      w_sum += p->w;
-
-      // Destroy the element on the front of the queue
-      landmark_measurements_.pop();
     }
+
+    // check to find the largest particle weight
+    if (p->w > w_max) {
+      w_max = p->w;
+    }
+
   }
 
-  resample(w_sum);
+  double w_sum = 0;
+  for (auto& p : particles_) {
+    p->w = std::exp(p->w - w_max);
+    w_sum += p->w;
+  }
+
+
+  if (w_sum > 0) {
+    resample(w_sum);
+    landmark_measurements_.clear();
+  }
 
   //
   // Publish the MCL data
@@ -140,7 +151,7 @@ void MCL::tick()
 
 void MCL::measurements_cb(const aruco_localization::MarkerMeasurementArrayConstPtr& msg)
 {
-  landmark_measurements_.push(msg);
+  landmark_measurements_.push_back(msg);
 }
 
 void MCL::imu_cb(const sensor_msgs::ImuConstPtr&  msg)
@@ -287,16 +298,44 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   // compute the residual
   Eigen::Matrix<double,6,1> rvec = zvec - zhat;
 
+  // angle wrapping
+  wrapAngle(rvec(3));
+  wrapAngle(rvec(4));
+  wrapAngle(rvec(5));
+
   // build noise
   Eigen::Matrix<double,6,1> R_var;
-  R_var << std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
+  R_var << std::pow(0.01,2), std::pow(0.01,2), std::pow(0.01,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
 
-  return logmvnpdf(zvec, zhat, R_var.asDiagonal());
+  // small
+  // Eigen::Vector3d zvecs; zvecs << zvec(0), zvec(1), zvec(2);
+  // Eigen::Vector3d zhats; zhats << zhat(0), zhat(1), zhat(2);
+  // Eigen::Vector3d R_vars; R_vars << 0.1, 0.1, 0.1;
+  // return mvnpdf(zvecs, zhats, R_vars.asDiagonal());
+
+  return logmvnpdf(rvec, Eigen::Matrix<double,6,1>::Zero(), R_var.asDiagonal());
 }
 
 // ----------------------------------------------------------------------------
 
-void MCL::resample(double w_norm)
+void MCL::wrapAngle(double& angle)
+{
+  if (angle > M_PI)
+    angle -= 2*M_PI;
+  else if (angle < -M_PI)
+    angle += 2*M_PI;
+}
+
+// ----------------------------------------------------------------------------
+
+void MCL::simple_resample(double w_sum)
+{
+  // std::sort(particles_.begin(), particles_.end(), );
+}
+
+// ----------------------------------------------------------------------------
+
+void MCL::resample(double w_sum)
 {
 
   // How many particles are there?
@@ -310,27 +349,32 @@ void MCL::resample(double w_norm)
 
   // initialize the selected particle and its (normalized) weight
   int i = 0;
-  double c = (particles_[0]->w/w_norm);
+  double c = (particles_[0]->w/w_sum);
+
+  // for (int m=0; m<M; m++) std::cout << particles_[m]->w << "   ";
+  // std::cout << std::endl;
+  // for (int m=0; m<M; m++) std::cout << particles_[m]->w/w_sum << "   ";
+  // std::cout << std::endl;
 
   std::vector<ParticlePtr> particles;
   for (int m=0; m<M; m++) {
 
     // The current location of the 'pointer'
-    double U = r + m/M;
+    double U = r + ((double)m)/M;
 
     // Make sure that we are in the correct bin
     while (U > c) {
       i++;
-      c += (particles_[i]->w/w_norm);
+      c += (particles_[i]->w/w_sum);
     }
 
-    std::cout << "Selecting particle " << i << std::endl;
+    // std::cout << "[" << m << " : " << U << " : " << c << " : " << i << "] Selecting particle " << i << std::endl;
 
     // Add a copy of the ith particle to the new set
     particles.push_back(std::make_shared<Particle>(*particles_[i]));
   }
 
-  std::cout << std::endl << std::endl;
+  // std::cout << std::endl << std::endl;
 
   // Keep the newly resampled particles
   particles_.swap(particles);

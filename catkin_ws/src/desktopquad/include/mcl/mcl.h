@@ -6,6 +6,7 @@
 #include <vector>
 #include <queue>
 #include <random>
+#include <limits>
 
 #include <Eigen/Dense>
 
@@ -83,7 +84,7 @@ namespace mcl
     tf::TransformBroadcaster tf_br_;
 
     // Measurement queues
-    std::queue<aruco_localization::MarkerMeasurementArrayConstPtr> landmark_measurements_;
+    std::vector<aruco_localization::MarkerMeasurementArrayConstPtr> landmark_measurements_;
 
     // Particle filter data members
     std::vector<ParticlePtr> particles_;
@@ -98,6 +99,7 @@ namespace mcl
 
     // methods
     void resample(double w_norm);
+    void simple_resample(double w_norm);
     double perceptual_model(const aruco_localization::MarkerMeasurement& z, ParticlePtr& p);
 
     void create_map(XmlRpc::XmlRpcValue& xMap);
@@ -113,6 +115,8 @@ namespace mcl
 
     double mvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma);
     double logmvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma);
+
+    void wrapAngle(double& angle);
   };
 
 }

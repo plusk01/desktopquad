@@ -25,12 +25,12 @@ namespace mcl {
       Eigen::Vector3d mean = Eigen::Vector3d::Zero();
 
       // Build zero-mean WSS linear acceleration process
-      Eigen::Vector3d accel_var(std::pow(std_x,2), std::pow(std_y,2), std::pow(std_z,2));
-      accel_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, accel_var.asDiagonal(), true);
+      Eigen::Vector3d vel_var(std::pow(std_x,2), std::pow(std_y,2), std::pow(std_z,2));
+      eta_vel_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, vel_var.asDiagonal(), true);
 
       // Build zero-mean WSS angular acceleration process
-      Eigen::Vector3d alpha_var(std::pow(std_ax,2), std::pow(std_ay,2), std::pow(std_az,2));
-      alpha_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, alpha_var.asDiagonal(), true);
+      Eigen::Vector3d avel_var(std::pow(std_ax,2), std::pow(std_ay,2), std::pow(std_az,2));
+      eta_avel_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, avel_var.asDiagonal(), true);
     }
 
     void sample(ParticlePtr& p, double dt) override
@@ -38,11 +38,11 @@ namespace mcl {
 
       if (acc(2) > -20 && acc(2) < -6) {
           // Sample the random variables to create velocity inputs
-          Eigen::Vector3d V     = accel_->samples(1)*dt;
-          Eigen::Vector3d Omega = alpha_->samples(1)*dt;
+          Eigen::Vector3d V     = eta_vel_->samples(1);
+          Eigen::Vector3d Omega = eta_avel_->samples(1);
 
           // Cosine and Sine of Heading Angles
-          auto euler = p->quat.toRotationMatrix().eulerAngles(0,1,2);
+          auto euler = p->quat.toRotationMatrix().transpose().eulerAngles(0,1,2);
           double cphi = std::cos(euler(0));
           double sphi = std::sin(euler(0));
           double cth = std::cos(euler(1));
@@ -59,9 +59,11 @@ namespace mcl {
                    p->omega(0)*p->vel(2) - p->omega(2)*p->vel(0) + g*cth*sphi,
                    p->omega(1)*p->vel(0) - p->omega(0)*p->vel(1) + g*cth*cphi;
 
-          p->vel += (acc-acc_b+b_vel)*dt + V;
+          p->vel = (acc-acc_b+b_vel)*dt + V;
 
           // position (working frame)
+          // Note: Eigen uses active rotations, so this line should technically read:
+          //    p->quat.inverse().toRotationMatrix().transpose() * p->vel*dt
           p->pos += p->quat.toRotationMatrix() * p->vel*dt;
 
           // orientation (working to measurement frame)
@@ -76,8 +78,8 @@ namespace mcl {
 
   private:
     // input stochastic processes
-    std::shared_ptr<Eigen::EigenMultivariateNormal<double>> accel_; // linear acceleration
-    std::shared_ptr<Eigen::EigenMultivariateNormal<double>> alpha_; // angular acceleration
+    std::shared_ptr<Eigen::EigenMultivariateNormal<double>> eta_vel_; // linear acceleration
+    std::shared_ptr<Eigen::EigenMultivariateNormal<double>> eta_avel_; // angular acceleration
       
   };
 

@@ -1,5 +1,5 @@
 # number of particles
-M: 100
+M: 500
 
 # platform volume (i.e., states/particles outside this volume are invalid)
 platform_volume:
@@ -20,7 +20,8 @@ initial_volume:
   z: [ 0.350, 0.390]
   R: [-0.08726, 0.08726] # -15 to 15 degrees
   P: [-0.08726, 0.08726] # -15 to 15 degrees
-  Y: [-3.142, 3.142]
+  Y: [-1.56, -1.58]
+  # Y: [-3.142, 3.142]
 
 # motion model
 #   0 - stochastically-driven nearly-constant velocity
@@ -37,3 +38,13 @@ sdncv:
   ax: 0.5
   ay: 0.5
   az: 0.5
+
+# parameters for the IMU mechanized motion model
+mech:
+  # standard deviation parameters for linear and angular velocity
+  x:  0.75
+  y:  0.75
+  z:  0.75
+  ax: 0.1
+  ay: 0.1
+  az: 0.1
