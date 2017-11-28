@@ -20,6 +20,7 @@
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <sensor_msgs/Imu.h>
 #include "aruco_localization/MarkerMeasurementArray.h"
@@ -73,6 +74,7 @@ namespace mcl
     // Publishers and Subscribers
     ros::Publisher map_pub_;
     ros::Publisher particles_pub_;
+    ros::Publisher estimate_pub_;
     ros::Subscriber meas_sub_;
     ros::Subscriber is_flying_sub_;
     ros::Subscriber imu_sub_;
@@ -99,7 +101,6 @@ namespace mcl
 
     // methods
     void resample(double w_norm);
-    void simple_resample(double w_norm);
     double perceptual_model(const aruco_localization::MarkerMeasurement& z, ParticlePtr& p);
 
     void create_map(XmlRpc::XmlRpcValue& xMap);

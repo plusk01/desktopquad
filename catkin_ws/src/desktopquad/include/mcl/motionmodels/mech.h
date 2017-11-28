@@ -35,44 +35,46 @@ namespace mcl {
 
     void sample(ParticlePtr& p, double dt) override
     {
-
+      // Gate the accelerometer measurements so the particle doesn't go crazy.
+      // This is particularly important at the beginning of Gazebo simulations when
+      // the IMU gives back either zeros or very noisy samples.
       if (acc(2) > -20 && acc(2) < -6) {
-          // Sample the random variables to create velocity inputs
-          Eigen::Vector3d V     = eta_vel_->samples(1);
-          Eigen::Vector3d Omega = eta_avel_->samples(1);
+        // Sample the random variables to create velocity inputs
+        Eigen::Vector3d V     = eta_vel_->samples(1);
+        Eigen::Vector3d Omega = eta_avel_->samples(1);
 
-          // Cosine and Sine of Heading Angles
-          auto euler = p->quat.toRotationMatrix().transpose().eulerAngles(0,1,2);
-          double cphi = std::cos(euler(0));
-          double sphi = std::sin(euler(0));
-          double cth = std::cos(euler(1));
-          double sth = std::sin(euler(1));
-          double cpsi = std::cos(euler(2));
-          double spsi = std::sin(euler(2));
-            
-          // angular velocity (measurement frame)
-          p->omega = gyro - gyro_b + Omega;  
+        // Cosine and Sine of Heading Angles
+        auto euler = p->quat.toRotationMatrix().eulerAngles(0,1,2);
+        double cphi = std::cos(euler(0));
+        double sphi = std::sin(euler(0));
+        double cth = std::cos(euler(1));
+        double sth = std::sin(euler(1));
+        double cpsi = std::cos(euler(2));
+        double spsi = std::sin(euler(2));
+          
+        // angular velocity (measurement frame)
+        p->omega = gyro - gyro_b + Omega;  
 
-          // velocity (measurement frame)
-          Eigen::Vector3d b_vel;
-          b_vel << p->omega(2)*p->vel(1) - p->omega(1)*p->vel(2) - g*sth,
-                   p->omega(0)*p->vel(2) - p->omega(2)*p->vel(0) + g*cth*sphi,
-                   p->omega(1)*p->vel(0) - p->omega(0)*p->vel(1) + g*cth*cphi;
+        // velocity (measurement frame)
+        Eigen::Vector3d b_vel;
+        b_vel << p->omega(2)*p->vel(1) - p->omega(1)*p->vel(2) - g*sth,
+                 p->omega(0)*p->vel(2) - p->omega(2)*p->vel(0) + g*cth*sphi,
+                 p->omega(1)*p->vel(0) - p->omega(0)*p->vel(1) + g*cth*cphi;
 
-          p->vel = (acc-acc_b+b_vel)*dt + V;
+        p->vel = (acc-acc_b+b_vel)*dt + V;
 
-          // position (working frame)
-          // Note: Eigen uses active rotations, so this line should technically read:
-          //    p->quat.inverse().toRotationMatrix().transpose() * p->vel*dt
-          p->pos += p->quat.toRotationMatrix() * p->vel*dt;
+        // position (working frame)
+        // Note: Eigen uses active rotations, so this line should technically read:
+        //    p->quat.inverse().toRotationMatrix().transpose() * p->vel*dt
+        p->pos += p->quat.toRotationMatrix() * p->vel*dt;
 
-          // orientation (working to measurement frame)
-          Eigen::Quaterniond qdot =  p->quat * Eigen::Quaterniond(0, p->omega(0)*dt, p->omega(1)*dt, p->omega(2)*dt);
-          p->quat.w() += 0.5*qdot.w();
-          p->quat.x() += 0.5*qdot.x();
-          p->quat.y() += 0.5*qdot.y();
-          p->quat.z() += 0.5*qdot.z();
-          p->quat.normalize();
+        // orientation (working to measurement frame)
+        Eigen::Quaterniond qdot =  p->quat * Eigen::Quaterniond(0, p->omega(0)*dt, p->omega(1)*dt, p->omega(2)*dt);
+        p->quat.w() += 0.5*qdot.w();
+        p->quat.x() += 0.5*qdot.x();
+        p->quat.y() += 0.5*qdot.y();
+        p->quat.z() += 0.5*qdot.z();
+        p->quat.normalize();
       }
     }
 

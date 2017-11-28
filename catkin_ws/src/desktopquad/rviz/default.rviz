@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /Landmarks1
         - /PoseArray1
+        - /Pose1
       Splitter Ratio: 0.522222221
     Tree Height: 747
   - Class: rviz/Selection
@@ -151,6 +152,21 @@ Visualization Manager:
       Topic: /chiny/mcl/particles
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Axes Length: 0.0500000007
+      Axes Radius: 0.00999999978
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.300000012
+      Head Radius: 0.100000001
+      Name: Pose
+      Shaft Length: 1
+      Shaft Radius: 0.0500000007
+      Shape: Axes
+      Topic: /chiny/mcl/estimate
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -175,25 +191,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.0880698
+      Distance: 1.24098885
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.174480051
-        Y: 0.0406923927
-        Z: 0.189897448
+        X: -0.0994452089
+        Y: 0.0979441628
+        Z: 0.115121536
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.0297975577
+      Pitch: 0.874797702
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.83539319
+      Yaw: 6.20859337
     Saved: ~
 Window Geometry:
   Displays:

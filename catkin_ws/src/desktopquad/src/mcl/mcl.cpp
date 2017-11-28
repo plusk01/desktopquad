@@ -66,6 +66,7 @@ MCL::MCL() :
   // Connect publishers and subscribers
   map_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("map", 1);
   particles_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("particles", 1);
+  estimate_pub_ = nh_private.advertise<geometry_msgs::PoseStamped>("estimate", 1);
   meas_sub_ = nh_private.subscribe("measurements", 1, &MCL::measurements_cb, this);
 
   // initialize the particles
@@ -292,26 +293,20 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   zhat << zhat_pos(0), zhat_pos(1), zhat_pos(2), zhat_eul(2), zhat_eul(1), zhat_eul(0);
 
   //
-  // Calculate likelihood:p(z|x,m)
+  // Calculate likelihood: p(z|x,m)
   //
 
   // compute the residual
   Eigen::Matrix<double,6,1> rvec = zvec - zhat;
 
-  // angle wrapping
-  wrapAngle(rvec(3));
-  wrapAngle(rvec(4));
-  wrapAngle(rvec(5));
+  // // angle wrapping
+  // wrapAngle(rvec(3));
+  // wrapAngle(rvec(4));
+  // wrapAngle(rvec(5));
 
   // build noise
   Eigen::Matrix<double,6,1> R_var;
-  R_var << std::pow(0.01,2), std::pow(0.01,2), std::pow(0.01,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
-
-  // small
-  // Eigen::Vector3d zvecs; zvecs << zvec(0), zvec(1), zvec(2);
-  // Eigen::Vector3d zhats; zhats << zhat(0), zhat(1), zhat(2);
-  // Eigen::Vector3d R_vars; R_vars << 0.1, 0.1, 0.1;
-  // return mvnpdf(zvecs, zhats, R_vars.asDiagonal());
+  R_var << std::pow(0.005,2), std::pow(0.005,2), std::pow(0.005,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
 
   return logmvnpdf(rvec, Eigen::Matrix<double,6,1>::Zero(), R_var.asDiagonal());
 }
@@ -328,16 +323,8 @@ void MCL::wrapAngle(double& angle)
 
 // ----------------------------------------------------------------------------
 
-void MCL::simple_resample(double w_sum)
-{
-  // std::sort(particles_.begin(), particles_.end(), );
-}
-
-// ----------------------------------------------------------------------------
-
 void MCL::resample(double w_sum)
 {
-
   // How many particles are there?
   int M = particles_.size();
 
@@ -464,6 +451,14 @@ void MCL::publish_particles()
   particles_msg.header.stamp = ros::Time::now();
   particles_msg.header.frame_id = working_frame_;
 
+  // calculate the mean of the particles
+  double avg_x = 0;
+  double avg_y = 0;
+  double avg_z = 0;
+  double avg_phi = 0;
+  double avg_the = 0;
+  double avg_psi = 0;
+
   for (auto& p: particles_) {
     geometry_msgs::Pose particle;
 
@@ -473,9 +468,33 @@ void MCL::publish_particles()
     tf::quaternionEigenToMsg(p->quat, particle.orientation);
 
     particles_msg.poses.push_back(particle);
+
+    // Sum up the particle pose to find the mean
+    avg_x += p->pos(0);
+    avg_y += p->pos(1);
+    avg_z += p->pos(2);
+    avg_phi += 0;
+    avg_the += 0;
+    avg_psi += 0;
   }
 
   particles_pub_.publish(particles_msg);
+
+  // Take the average, build the pose message, and publish it
+  avg_x /= particles_.size();
+  avg_y /= particles_.size();
+  avg_z /= particles_.size();
+  avg_phi /= particles_.size();
+  avg_the /= particles_.size();
+  avg_psi /= particles_.size();
+  geometry_msgs::PoseStamped estimate;
+  estimate.header.stamp = ros::Time::now();
+  estimate.header.frame_id = working_frame_;
+  estimate.pose.position.x = avg_x;
+  estimate.pose.position.y = avg_y;
+  estimate.pose.position.z = avg_z;
+  estimate.pose.orientation.w = 1;
+  estimate_pub_.publish(estimate);
 }
 
 }
