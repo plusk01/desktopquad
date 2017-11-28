@@ -44,6 +44,7 @@
 
     <node pkg="desktopquad" type="mcl" name="mcl" output="screen">
       <remap from="mcl/measurements" to="aruco/measurements" />
+      <remap from="mcl/imu/data" to="imu/data" />
     </node>
 
     <!-- Is Flying Publisher -->

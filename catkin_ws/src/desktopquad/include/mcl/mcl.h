@@ -19,6 +19,7 @@
 #include <eigen_conversions/eigen_msg.h>
 
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <sensor_msgs/Imu.h>
 #include "aruco_localization/MarkerMeasurementArray.h"
 #include "aruco_localization/MarkerMeasurement.h"
@@ -74,6 +75,8 @@ namespace mcl
     ros::Subscriber meas_sub_;
     ros::Subscriber is_flying_sub_;
     ros::Subscriber imu_sub_;
+    ros::Subscriber acc_b_sub_;
+    ros::Subscriber gyro_b_sub_;
 
     // ROS tf listener and broadcaster
     tf::TransformListener tf_listener_;
@@ -101,6 +104,8 @@ namespace mcl
 
     void measurements_cb(const aruco_localization::MarkerMeasurementArrayConstPtr& msg);
     void imu_cb(const sensor_msgs::ImuConstPtr&  msg);
+    void acc_b_cb(const geometry_msgs::Vector3StampedConstPtr&  msg);
+    void gyro_b_cb(const geometry_msgs::Vector3StampedConstPtr&  msg);
 
     void publish_map();
     void publish_particles();

@@ -15,8 +15,11 @@ namespace mcl {
   class MECH : public MotionModel
   {
   public:
-    Eigen::Vector3d acc;
-    Eigen::Vector3d gyro;
+    Eigen::Vector3d acc = Eigen::Vector3d::Zero();
+    Eigen::Vector3d gyro = Eigen::Vector3d::Zero();
+    Eigen::Vector3d acc_b = Eigen::Vector3d::Zero();
+    Eigen::Vector3d gyro_b = Eigen::Vector3d::Zero();
+    const double g = 9.8;
     MECH(double std_x, double std_y, double std_z, double std_ax, double std_ay, double std_az)
     {
       Eigen::Vector3d mean = Eigen::Vector3d::Zero();
@@ -36,11 +39,24 @@ namespace mcl {
       Eigen::Vector3d V     = accel_->samples(1)*dt;
       Eigen::Vector3d Omega = alpha_->samples(1)*dt;
 
-      // velocity (measurement frame)
-      p->vel += V + acc*dt;
-
+      // Cosine and Sine of Heading Angles
+      auto euler = p->quat.toRotationMatrix().eulerAngles(0,1,2);
+      double cphi = std::cos(euler(0));
+      double sphi = std::sin(euler(0));
+      double cth = std::cos(euler(1));
+      double sth = std::sin(euler(1));
+      double cpsi = std::cos(euler(2));
+      double spsi = std::sin(euler(2));
+        
       // angular velocity (measurement frame)
-      p->omega += Omega + gyro;
+      p->omega = gyro - gyro_b + Omega;  
+
+      // velocity (measurement frame)
+      Eigen::Vector3d b_vel;
+      b_vel << p->omega(2)*p->vel(1) - p->omega(1)*p->vel(2) - g*sth,
+               p->omega(0)*p->vel(2) - p->omega(2)*p->vel(0) + g*cth*sphi,
+               p->omega(1)*p->vel(0) - p->omega(0)*p->vel(1) + g*cth*cphi;
+      p->vel += V + (acc-acc_b+b_vel)*dt;
 
       // position (working frame)
       p->pos += p->quat.toRotationMatrix() * p->vel*dt;

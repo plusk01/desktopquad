@@ -49,7 +49,9 @@ MCL::MCL() :
     double ay = nh_private.param<double>("sdncv/ay", 0.001);
     double az = nh_private.param<double>("sdncv/az", 0.001);
     mm_ = std::make_shared<MECH>(x, y, z, ax, ay, az);
-    imu_sub_ = nh_private.subscribe("chiny/imu", 1, &MCL::imu_cb, this);
+    imu_sub_ = nh_private.subscribe("imu/data", 1, &MCL::imu_cb, this);
+    acc_b_sub_ = nh_private.subscribe("imu/acc_bias", 1, &MCL::acc_b_cb, this);
+    gyro_b_sub_ = nh_private.subscribe("imu/gyro_bias", 1, &MCL::gyro_b_cb, this);
   }
 
   // create map representation from rosparam server
@@ -138,6 +140,18 @@ void MCL::imu_cb(const sensor_msgs::ImuConstPtr&  msg)
     std::shared_ptr<MECH> mech_mm_ = std::static_pointer_cast<MECH>(mm_);
     mech_mm_->acc << msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z;
     mech_mm_->gyro << msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z;
+}
+
+void MCL::acc_b_cb(const geometry_msgs::Vector3StampedConstPtr&  msg)
+{
+    std::shared_ptr<MECH> mech_mm_ = std::static_pointer_cast<MECH>(mm_);
+    mech_mm_->acc_b << msg->vector.x, msg->vector.y, msg->vector.z;
+}
+
+void MCL::gyro_b_cb(const geometry_msgs::Vector3StampedConstPtr&  msg)
+{
+    std::shared_ptr<MECH> mech_mm_ = std::static_pointer_cast<MECH>(mm_);
+    mech_mm_->gyro_b << msg->vector.x, msg->vector.y, msg->vector.z;
 }
 
 // ----------------------------------------------------------------------------
