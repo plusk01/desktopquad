@@ -51,7 +51,7 @@ namespace mcl {
           double spsi = std::sin(euler(2));
             
           // angular velocity (measurement frame)
-          p->omega = gyro - gyro_b; // + Omega;  
+          p->omega = gyro - gyro_b + Omega;  
 
           // velocity (measurement frame)
           Eigen::Vector3d b_vel;
@@ -59,7 +59,7 @@ namespace mcl {
                    p->omega(0)*p->vel(2) - p->omega(2)*p->vel(0) + g*cth*sphi,
                    p->omega(1)*p->vel(0) - p->omega(0)*p->vel(1) + g*cth*cphi;
 
-          p->vel += (acc-acc_b+b_vel)*dt; // + V;
+          p->vel += (acc-acc_b+b_vel)*dt + V;
 
           // position (working frame)
           p->pos += p->quat.toRotationMatrix() * p->vel*dt;

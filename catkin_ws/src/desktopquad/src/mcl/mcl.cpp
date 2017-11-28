@@ -40,8 +40,7 @@ MCL::MCL() :
     double ay = nh_private.param<double>("sdncv/ay", 0.001);
     double az = nh_private.param<double>("sdncv/az", 0.001);
     mm_ = std::make_shared<SDNCV>(x, y, z, ax, ay, az);
-  }
-  if (mm == MM_MECH) {
+  } else if (mm == MM_MECH) {
     double x = nh_private.param<double>("sdncv/x", 0.01);
     double y = nh_private.param<double>("sdncv/y", 0.01);
     double z = nh_private.param<double>("sdncv/z", 0.01);
