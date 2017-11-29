@@ -26,6 +26,9 @@
 #include "aruco_localization/MarkerMeasurementArray.h"
 #include "aruco_localization/MarkerMeasurement.h"
 
+
+#include "lib/dr_eigen_average.h"
+
 #include "mcl/particle.h"
 #include "mcl/motionmodels/motion_model.h"
 #include "mcl/motionmodels/sdncv.h"

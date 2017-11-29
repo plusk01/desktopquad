@@ -100,6 +100,8 @@ void MCL::tick()
   // store the sum of all probability weights to normalize with
   double w_max = std::numeric_limits<double>::lowest();
 
+  std::cout << "\n\n**** New Tick ****\n\n";
+
   for (auto& p: particles_) {
     // Prediction
     mm_->sample(p, dt);
@@ -241,8 +243,10 @@ void MCL::init_particles()
     particles_.emplace_back(std::make_shared<Particle>(
         // position (in working frame)
         xDis(gen), yDis(gen), zDis(gen),
+        // 0, 0, 0,
         // orientation (from working to measurement frame)
         RDis(gen),PDis(gen),YDis(gen)
+        // 0, 0, 0
       ));
   }
 
@@ -274,7 +278,7 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   // extract Euler (3-2-1) angles from the landmark measurement
   Eigen::Quaterniond q;
   tf::quaternionMsgToEigen(z.orientation, q);
-  auto euler = q.toRotationMatrix().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
+  auto euler = q.toRotationMatrix().transpose().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
 
   // form the measurement vector
   Eigen::Matrix<double,6,1> zvec;
@@ -284,9 +288,14 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   // Measurement model
   //
 
+  // Create rotation matrix from measurement to working frame
+  // Note: Eigen uses active rotations, so this line should technically read:
+  //    p->quat.inverse().toRotationMatrix().transpose()
+  Eigen::Matrix3d R_m2w = p->quat.toRotationMatrix();
+
   // given the state, what should the measurement be?
-  Eigen::Vector3d zhat_pos = p->quat.toRotationMatrix() * (p->pos - L_k);
-  Eigen::Vector3d zhat_eul = p->quat.toRotationMatrix().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
+  Eigen::Vector3d zhat_pos = R_m2w.transpose() * (p->pos - L_k);
+  Eigen::Vector3d zhat_eul = R_m2w.transpose().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
 
   // combine the position and orientation components
   Eigen::Matrix<double,6,1> zhat;
@@ -306,9 +315,13 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
 
   // build noise
   Eigen::Matrix<double,6,1> R_var;
-  R_var << std::pow(0.005,2), std::pow(0.005,2), std::pow(0.005,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
+  R_var << std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(1,2), std::pow(1,2), std::pow(1,2);
 
-  return logmvnpdf(rvec, Eigen::Matrix<double,6,1>::Zero(), R_var.asDiagonal());
+  Eigen::Vector3d R_var_small = R_var.segment(0,3);
+  Eigen::Vector3d rvec_small = rvec.segment(0,3);
+  return logmvnpdf(rvec_small, Eigen::Vector3d::Zero(), R_var_small.asDiagonal());
+
+  // return logmvnpdf(rvec, Eigen::Matrix<double,6,1>::Zero(), R_var.asDiagonal());
 }
 
 // ----------------------------------------------------------------------------
@@ -451,13 +464,9 @@ void MCL::publish_particles()
   particles_msg.header.stamp = ros::Time::now();
   particles_msg.header.frame_id = working_frame_;
 
-  // calculate the mean of the particles
-  double avg_x = 0;
-  double avg_y = 0;
-  double avg_z = 0;
-  double avg_phi = 0;
-  double avg_the = 0;
-  double avg_psi = 0;
+  // Containers for position and quaternions from each particle
+  std::vector<Eigen::Vector3d> positions;
+  std::vector<Eigen::Quaterniond> orientations;
 
   for (auto& p: particles_) {
     geometry_msgs::Pose particle;
@@ -469,31 +478,27 @@ void MCL::publish_particles()
 
     particles_msg.poses.push_back(particle);
 
-    // Sum up the particle pose to find the mean
-    avg_x += p->pos(0);
-    avg_y += p->pos(1);
-    avg_z += p->pos(2);
-    avg_phi += 0;
-    avg_the += 0;
-    avg_psi += 0;
+    // Store the position and orientation of this particle for averaging
+    positions.push_back(p->pos);
+    orientations.push_back(p->quat);
   }
 
   particles_pub_.publish(particles_msg);
 
-  // Take the average, build the pose message, and publish it
-  avg_x /= particles_.size();
-  avg_y /= particles_.size();
-  avg_z /= particles_.size();
-  avg_phi /= particles_.size();
-  avg_the /= particles_.size();
-  avg_psi /= particles_.size();
+  //
+  // Create the estimate by averaging the position/orientation of the particles
+  //
+
+  Eigen::Vector3d avgPos = dr::averagePositions<double>(positions);
+  Eigen::Quaterniond avgOri = dr::averageQuaternions<double>(orientations);
+
   geometry_msgs::PoseStamped estimate;
   estimate.header.stamp = ros::Time::now();
   estimate.header.frame_id = working_frame_;
-  estimate.pose.position.x = avg_x;
-  estimate.pose.position.y = avg_y;
-  estimate.pose.position.z = avg_z;
-  estimate.pose.orientation.w = 1;
+  estimate.pose.position.x = avgPos(0);
+  estimate.pose.position.y = avgPos(1);
+  estimate.pose.position.z = avgPos(2);
+  tf::quaternionEigenToMsg(avgOri, estimate.pose.orientation);
   estimate_pub_.publish(estimate);
 }
 

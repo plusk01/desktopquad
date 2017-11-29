@@ -80,12 +80,12 @@ Visualization Manager:
       Reference Frame: camera
       Value: false
     - Class: rviz/Axes
-      Enabled: true
+      Enabled: false
       Length: 0.100000001
       Name: body
       Radius: 0.00999999978
       Reference Frame: body
-      Value: true
+      Value: false
     - Angle Tolerance: 9.99999975e-05
       Class: rviz/Odometry
       Covariance:
@@ -191,7 +191,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.24098885
+      Distance: 2.44949198
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -206,10 +206,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.874797702
+      Pitch: 0.299797982
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 6.20859337
+      Yaw: 0.0404078178
     Saved: ~
 Window Geometry:
   Displays:
@@ -227,5 +227,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1200
-  X: 620
-  Y: 34
+  X: 705
+  Y: 54
