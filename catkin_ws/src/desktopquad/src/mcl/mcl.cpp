@@ -294,8 +294,14 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   Eigen::Matrix3d R_m2w = p->quat.toRotationMatrix();
 
   // given the state, what should the measurement be?
-  Eigen::Vector3d zhat_pos = R_m2w.transpose() * (p->pos - L_k);
+  Eigen::Vector3d zhat_pos = R_m2w.transpose() * -(p->pos - L_k);
   Eigen::Vector3d zhat_eul = R_m2w.transpose().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
+
+  // std::cout << "p->pos: "   << p->pos.transpose() << "\t";
+  // std::cout << "L_k: "      << L_k.transpose() << "\n";
+  // std::cout << "zhat_pos: " << zhat_pos.transpose() << "\t";
+  // std::cout << "zvec_pos: " << zvec.segment(0,3).transpose() << "\n";
+  // std::cout << std::endl;
 
   // combine the position and orientation components
   Eigen::Matrix<double,6,1> zhat;

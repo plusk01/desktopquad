@@ -1,5 +1,5 @@
 # number of particles
-M: 400
+M: 300
 
 # platform volume (i.e., states/particles outside this volume are invalid)
 platform_volume:
@@ -15,12 +15,17 @@ platform_volume:
 # particles do not need a large range since we assume that MCL starts when the
 # quadrotor is not flying and is level on the base of the platform.
 initial_volume:
-  x: [-0.150, 0.150]
-  y: [-0.175, 0.175]
-  z: [ 0.350, 0.390]
+  # x: [-0.150, 0.150]
+  # y: [-0.175, 0.175]
+  # z: [ 0.350, 0.390]
+
+  x: [0.0, 0.0]
+  y: [0.0, 0.0]
+  z: [ 0.380, 0.390]
+
   # R: [-0.08726, 0.08726] # -5 to 5 degrees
   # P: [-0.08726, 0.08726] # -5 to 5 degrees
-  R: [0.00, 0.00] # -eps to eps degrees
+  R: [3.142, 3.142] # -eps to eps degrees
   P: [0.00, 0.00] # -eps to eps degrees
   Y: [-1.56, -1.58]
   # Y: [-3.142, 3.142]
