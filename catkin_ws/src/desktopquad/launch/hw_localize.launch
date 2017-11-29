@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="mav_name"            default="chiny"/>
+
+  <group ns="$(arg mav_name)">
+
+    <!-- Load common parameters -->
+    <rosparam command="load" file="$(find desktopquad)/params/platform.yaml" ns="platform"/>
+    <rosparam command="load" file="$(find desktopquad)/params/map.yaml" ns="mcl/map"/>
+    <rosparam command="load" file="$(find desktopquad)/params/localizer.yaml" ns="mcl"/>
+
+    <node pkg="desktopquad" type="mcl" name="mcl" output="screen">
+      <remap from="mcl/measurements" to="aruco/measurements" />
+      <remap from="mcl/imu/data" to="imu/data" />
+      <remap from="mcl/imu/acc_bias" to="imu/acc_bias" />
+      <remap from="mcl/imu/gyro_bias" to="imu/gyro_bias" />
+    </node>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find desktopquad)/rviz/default.rviz" />
+
+    <!-- Add tf frames for this physical setup -->
+    <node pkg="desktopquad" type="tf_frames" name="tf_frames" />
+
+    <!-- ArUco Localization -->
+    <node name="aruco" pkg="aruco_localization" type="aruco_localization" output="screen">
+      <param name="show_output_video" value="true" />
+      <param name="markermap_config" value="$(find desktopquad_sim)/params/aruco_mip_36h12_markermap.yaml" />
+      <param name="marker_size" value="0.0298" />
+
+      <param name="debug_save_input_frames" value="false" />
+      <param name="debug_save_output_frames" value="false" />
+      <param name="debug_image_path" value="/tmp/arucoimages" />
+
+      <remap from="input_image" to="camera/image_raw" />
+      <remap from="output_image" to="aruco/image" />
+    </node>
+
+    <include file="$(find video_stream_opencv)/launch/camera.launch">
+      <!-- node name and ros graph name -->
+      <arg name="camera_name" value="camera" />
+      <!-- means video device 0, /dev/video0 -->
+      <arg name="video_stream_provider" value="0" />
+      <!-- throttling the querying of frames to -->
+      <arg name="fps" value="30" />
+      <!-- setting frame_id -->
+      <arg name="frame_id" value="chiny_cam" />
+      <!-- camera info loading, take care as it needs the "file:///" at the start , e.g.:
+      "file:///$(find your_camera_package)/config/your_camera.yaml" -->
+      <arg name="camera_info_url" value="file://$(find aruco_localization)/camera_info/chiny_cam.yaml" />
+      <!-- flip the image horizontally (mirror it) -->
+      <arg name="flip_horizontal" value="false" />
+      <!-- flip the image vertically -->
+      <arg name="flip_vertical" value="false" />
+      <!-- visualize on an image_view window the stream generated -->
+      <arg name="visualize" value="false" />
+    </include>
+
+  </group>
+
+</launch>
