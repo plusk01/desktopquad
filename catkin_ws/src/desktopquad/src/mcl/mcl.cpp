@@ -63,6 +63,11 @@ MCL::MCL() :
     ros::shutdown();
   }
 
+  // build measurement noise mvnpdf
+  Eigen::Matrix<double,6,1> R_var;
+  R_var << std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
+  mvnpdf_ = std::make_shared<rv::mvnpdf>(R_var.segment(0,3).asDiagonal());
+
   // Connect publishers and subscribers
   map_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("map", 1);
   particles_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("particles", 1);
@@ -100,15 +105,15 @@ void MCL::tick()
   // store the sum of all probability weights to normalize with
   double w_max = std::numeric_limits<double>::lowest();
 
-  std::cout << "\n\n**** New Tick ****\n\n";
+  // std::cout << "\n\n**** New Tick ****\n\n";
 
-  for (auto& p: particles_) {
+  for (auto& p : particles_) {
     // Prediction
     mm_->sample(p, dt);
 
     // If there are measurements to process
     // while (landmark_measurements_.size() > 0) {
-    for (auto& Z : landmark_measurements_) {
+    for (const auto& Z : landmark_measurements_) {
       // Get the current landmark measurements (this is an array of marker measurements)
       // auto Z = landmark_measurements_.front();
 
@@ -276,9 +281,11 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   L_k << search->second.x, search->second.y, search->second.z;
 
   // extract Euler (3-2-1) angles from the landmark measurement
-  Eigen::Quaterniond q;
-  tf::quaternionMsgToEigen(z.orientation, q);
-  auto euler = q.toRotationMatrix().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
+  // Eigen::Quaterniond q;
+  // tf::quaternionMsgToEigen(z.orientation, q);
+  // auto euler = q.toRotationMatrix().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
+
+  Eigen::Vector3d euler = Eigen::Vector3d::Zero();
 
   // form the measurement vector
   Eigen::Matrix<double,6,1> zvec;
@@ -295,7 +302,7 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
 
   // given the state, what should the measurement be?
   Eigen::Vector3d zhat_pos = R_c2w.transpose() * (L_k - p->pos);
-  Eigen::Vector3d zhat_eul = R_c2w.transpose().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
+  Eigen::Vector3d zhat_eul = Eigen::Vector3d::Zero(); //R_c2w.transpose().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
 
   // std::cout << "p->pos: "   << p->pos.transpose() << "\t";
   // std::cout << "L_k: "      << L_k.transpose() << "\n";
@@ -321,15 +328,10 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   rvec(4) = wrapAngle(rvec(4));
   rvec(5) = wrapAngle(rvec(5));
 
-  // build noise
-  Eigen::Matrix<double,6,1> R_var;
-  R_var << std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
-
-  Eigen::Vector3d R_var_small = R_var.segment(0,3);
   Eigen::Vector3d rvec_small = rvec.segment(0,3);
-  return logmvnpdf(rvec_small, Eigen::Vector3d::Zero(), R_var_small.asDiagonal());
+  // return logmvnpdf(rvec_small, Eigen::Vector3d::Zero(), R_var_small.asDiagonal());
 
-  // return logmvnpdf(rvec, Eigen::Matrix<double,6,1>::Zero(), R_var.asDiagonal());
+  return mvnpdf_->logprob(rvec_small, Eigen::Vector3d::Zero());
 }
 
 // ----------------------------------------------------------------------------
@@ -386,56 +388,6 @@ void MCL::resample(double w_sum)
 
   // Keep the newly resampled particles
   particles_.swap(particles);
-}
-
-// ----------------------------------------------------------------------------
-
-double MCL::logmvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma)
-{
-  // error checking
-  if ((x.size() != mu.size()) || (x.size() != Sigma.rows())) {
-    ROS_ERROR("[MCL::logmvnpdf] x and mu must be the same size!");
-    return 0;
-  }
-  if (Sigma.rows() != Sigma.cols()) {
-    ROS_ERROR("[MCL::logmvnpdf] Sigma must be square!");
-    return 0;
-  }
-
-  // Dimension of mvn
-  int k = Sigma.rows();
-
-  // Kernel of a gaussian
-  Eigen::VectorXd residual = x - mu;
-  double mahal_sq = residual.transpose() * Sigma.inverse() * residual;
-
-  // Log-likelihood function (natural log of a mvn pdf)
-  return -0.5*( std::log(Sigma.determinant()) + mahal_sq + k*std::log(2*M_PI) );
-}
-
-// ----------------------------------------------------------------------------
-
-double MCL::mvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma)
-{
-  // error checking
-  if ((x.size() != mu.size()) || (x.size() != Sigma.rows())) {
-    ROS_ERROR("[MCL::mvnpdf] x and mu must be the same size!");
-    return 0;
-  }
-  if (Sigma.rows() != Sigma.cols()) {
-    ROS_ERROR("[MCL::mvnpdf] Sigma must be square!");
-    return 0;
-  }
-
-  // Normalization constant for a multivariate Gaussian pdf
-  int k = Sigma.rows();
-  double eta = 1.0/std::sqrt( std::pow(2*M_PI,k) * Sigma.determinant() );
-
-  // Kernel of a gaussian
-  Eigen::VectorXd residual = x - mu;
-  double gaussian = std::exp( -0.5 * residual.transpose() * Sigma.inverse() * residual );
-
-  return eta*gaussian;
 }
 
 // ----------------------------------------------------------------------------

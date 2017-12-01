@@ -28,6 +28,7 @@
 
 
 #include "lib/dr_eigen_average.h"
+#include "lib/mvnpdf.h"
 
 #include "mcl/particle.h"
 #include "mcl/motionmodels/motion_model.h"
@@ -102,6 +103,9 @@ namespace mcl
     // motion model
     MotionModelPtr mm_;
 
+    // multivariate normal pdf function
+    std::shared_ptr<rv::mvnpdf> mvnpdf_;
+
     // methods
     void resample(double w_norm);
     double perceptual_model(const aruco_localization::MarkerMeasurement& z, ParticlePtr& p);
@@ -116,9 +120,6 @@ namespace mcl
 
     void publish_map();
     void publish_particles();
-
-    double mvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma);
-    double logmvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma);
 
     double wrapAngle(double angle);
   };

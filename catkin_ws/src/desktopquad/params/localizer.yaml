@@ -1,5 +1,5 @@
 # number of particles
-M: 300
+M: 1000
 
 # platform volume (i.e., states/particles outside this volume are invalid)
 platform_volume:
@@ -45,9 +45,9 @@ sdncv:
   # ax: 0.5
   # ay: 0.5
   # az: 0.5
-  x:  7
-  y:  7
-  z:  7
+  x:  15
+  y:  15
+  z:  15
   ax: 200
   ay: 200
   az: 200
