@@ -45,12 +45,12 @@ sdncv:
   # ax: 0.5
   # ay: 0.5
   # az: 0.5
-  x:  0.75
-  y:  0.75
-  z:  0.75
-  ax: 0.5
-  ay: 0.5
-  az: 0.5
+  x:  7
+  y:  7
+  z:  7
+  ax: 200
+  ay: 200
+  az: 200
 
 # parameters for the IMU mechanized motion model
 mech:

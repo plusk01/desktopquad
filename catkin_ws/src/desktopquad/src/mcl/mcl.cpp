@@ -278,7 +278,7 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   // extract Euler (3-2-1) angles from the landmark measurement
   Eigen::Quaterniond q;
   tf::quaternionMsgToEigen(z.orientation, q);
-  auto euler = q.toRotationMatrix().transpose().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
+  auto euler = q.toRotationMatrix().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
 
   // form the measurement vector
   Eigen::Matrix<double,6,1> zvec;
@@ -291,14 +291,16 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   // Create rotation matrix from measurement to working frame
   // Note: Eigen uses active rotations, so this line should technically read:
   //    p->quat.inverse().toRotationMatrix().transpose()
-  Eigen::Matrix3d R_m2w = p->quat.toRotationMatrix();
+  Eigen::Matrix3d R_c2w = p->quat.toRotationMatrix();
 
   // given the state, what should the measurement be?
-  Eigen::Vector3d zhat_pos = R_m2w.transpose() * -(p->pos - L_k);
-  Eigen::Vector3d zhat_eul = R_m2w.transpose().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
+  Eigen::Vector3d zhat_pos = R_c2w.transpose() * (L_k - p->pos);
+  Eigen::Vector3d zhat_eul = R_c2w.transpose().eulerAngles(2, 1, 0); // [ yaw pitch roll ]
 
   // std::cout << "p->pos: "   << p->pos.transpose() << "\t";
   // std::cout << "L_k: "      << L_k.transpose() << "\n";
+  // // std::cout << "|zhat_pos|: " << zhat_pos.norm() << "\t";
+  // // std::cout << "|zvec_pos|: " << zvec.segment(0,3).norm() << "\n";
   // std::cout << "zhat_pos: " << zhat_pos.transpose() << "\t";
   // std::cout << "zvec_pos: " << zvec.segment(0,3).transpose() << "\n";
   // std::cout << std::endl;
@@ -314,14 +316,14 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   // compute the residual
   Eigen::Matrix<double,6,1> rvec = zvec - zhat;
 
-  // // angle wrapping
-  // wrapAngle(rvec(3));
-  // wrapAngle(rvec(4));
-  // wrapAngle(rvec(5));
+  // angle wrapping
+  rvec(3) = wrapAngle(rvec(3));
+  rvec(4) = wrapAngle(rvec(4));
+  rvec(5) = wrapAngle(rvec(5));
 
   // build noise
   Eigen::Matrix<double,6,1> R_var;
-  R_var << std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(1,2), std::pow(1,2), std::pow(1,2);
+  R_var << std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
 
   Eigen::Vector3d R_var_small = R_var.segment(0,3);
   Eigen::Vector3d rvec_small = rvec.segment(0,3);
@@ -332,7 +334,7 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
 
 // ----------------------------------------------------------------------------
 
-void MCL::wrapAngle(double& angle)
+double MCL::wrapAngle(double angle)
 {
   if (angle > M_PI)
     angle -= 2*M_PI;

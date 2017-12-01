@@ -120,7 +120,7 @@ namespace mcl
     double mvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma);
     double logmvnpdf(const Eigen::VectorXd& x, const Eigen::VectorXd& mu, const Eigen::MatrixXd& Sigma);
 
-    void wrapAngle(double& angle);
+    double wrapAngle(double angle);
   };
 
 }

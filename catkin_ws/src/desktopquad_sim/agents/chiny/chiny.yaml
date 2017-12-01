@@ -119,7 +119,7 @@ odometry_topic: ground_truth/odometry
 # IMU
 imu: {
 
-noise_on: true,
+noise_on: false,
 topic: imu/data,
 rate: 500,
 gyro_bias_topic: imu/gyro_bias,

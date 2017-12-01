@@ -36,10 +36,10 @@ namespace mcl {
       Eigen::Vector3d Omega = alpha_->samples(1)*dt;
 
       // velocity (measurement frame)
-      p->vel += V;
+      p->vel = V;
 
       // angular velocity (measurement frame)
-      p->omega += Omega;
+      p->omega = Omega;
 
       // position (working frame)
       // Note: Eigen uses active rotations, so this line should technically read:
