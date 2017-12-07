@@ -1,9 +1,9 @@
 #pragma once
 /**
- * Mechanized Motion Model: Integrates IMU & Gyro
+ * Mechanized Motion Model: Integrates IMU
 
 Based on the motion model used in:
-    'Beard: Quadrotor Notes, P. 22
+    Beard: Quadrotor Notes, P. 22
 */
 
 #include "mcl/motionmodels/motion_model.h"
@@ -19,7 +19,6 @@ namespace mcl {
     Eigen::Vector3d gyro = Eigen::Vector3d::Zero();
     Eigen::Vector3d acc_b = Eigen::Vector3d::Zero();
     Eigen::Vector3d gyro_b = Eigen::Vector3d::Zero();
-    const Eigen::Vector3d gvec = Eigen::Vector3d(0, 0, 9.80556);
     MECH(double std_x, double std_y, double std_z, double std_ax, double std_ay, double std_az)
     {
       Eigen::Vector3d mean = Eigen::Vector3d::Zero();
@@ -38,13 +37,9 @@ namespace mcl {
       // Gate the accelerometer measurements so the particle doesn't go crazy.
       // This is particularly important at the beginning of Gazebo simulations when
       // the IMU gives back either zeros or very noisy samples.
-      // if (acc(2) < -20 || acc(2) > -6) return;
-      if (acc.norm() < 0.8*gvec.norm() || acc.norm() > 1.2*gvec.norm()) return;
+      if (acc.norm() < (1.0 - acc_margin_)*gvec_.norm() || acc.norm() > (1.0 + acc_margin_)*gvec_.norm()) return;
 
       // Sample the random variables to create velocity inputs
-      // Eigen::Vector3d V     = Eigen::Vector3d::Zero();
-      // Eigen::Vector3d Omega = Eigen::Vector3d::Zero();
-
       Eigen::Vector3d V     = eta_vel_->samples(1);
       Eigen::Vector3d Omega = eta_avel_->samples(1);
 
@@ -54,7 +49,6 @@ namespace mcl {
       Eigen::Matrix3d R_m2w = p->quat.toRotationMatrix();
       
       // angular velocity (measurement frame)
-      // p->omega = Eigen::Vector3d::Zero();
       p->omega = gyro - gyro_b + Omega;
 
       // velocity (measurement frame)
@@ -64,15 +58,9 @@ namespace mcl {
                p->omega(1)*p->vel(0) - p->omega(0)*p->vel(1);
 
       // acceleration due to the force of gravity in the body frame
-      Eigen::Vector3d ag = R_m2w.transpose() * gvec;
+      Eigen::Vector3d ag = R_m2w.transpose() * gvec_;
 
       p->vel += (acc - acc_b + b_vel + ag)*dt + V;
-      // std::cout << std::left << std::setw(8) << "ag: "     << ag.transpose() << "\t\t";
-      // std::cout << std::left << std::setw(8) << "b_vel: "  << b_vel.transpose() << "\n";
-      // std::cout << std::left << std::setw(8) << "acc: "    << acc.transpose() << "\n";
-      // std::cout << std::left << std::setw(8) << "accel: "  << (acc-acc_b+b_vel+ag).transpose() << "\t\t";
-      // std::cout << std::left << std::setw(8) << "p->vel: " << p->vel.transpose();
-      // std::cout << std::endl;
 
       // position (working frame)
       p->pos += R_m2w * p->vel*dt;
@@ -90,7 +78,12 @@ namespace mcl {
     // input stochastic processes
     std::shared_ptr<Eigen::EigenMultivariateNormal<double>> eta_vel_; // linear velocity
     std::shared_ptr<Eigen::EigenMultivariateNormal<double>> eta_avel_; // angular velocity
-      
+
+    // acceleration due to gravity vector (defined in inertial NED frame)
+    const Eigen::Vector3d gvec_ = Eigen::Vector3d(0, 0, 9.81);
+
+    // Allowable margin (percentage) on accelerometer values +/- expected (gvec_)
+    double acc_margin_ = 0.20;
   };
 
 }

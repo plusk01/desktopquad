@@ -1,5 +1,5 @@
 # number of particles
-M: 1000
+M: 100
 
 # platform volume (i.e., states/particles outside this volume are invalid)
 platform_volume:
@@ -15,14 +15,9 @@ platform_volume:
 # particles do not need a large range since we assume that MCL starts when the
 # quadrotor is not flying and is level on the base of the platform.
 initial_volume:
-  # x: [-0.150, 0.150]
-  # y: [-0.175, 0.175]
-  # z: [ 0.350, 0.390]
-
-  x: [0.0, 0.0]
-  y: [0.0, 0.0]
-  z: [ 0.380, 0.390]
-
+  x: [-0.050, 0.050]
+  y: [-0.050, 0.050]
+  z: [ 0.370, 0.390]
   # R: [-0.08726, 0.08726] # -5 to 5 degrees
   # P: [-0.08726, 0.08726] # -5 to 5 degrees
   R: [3.142, 3.142] # -eps to eps degrees
@@ -32,6 +27,7 @@ initial_volume:
 
 # motion model
 #   0 - stochastically-driven nearly-constant velocity
+#   1 - mechanized motion model w/ IMU
 #
 #   (defn come from `MotionModels` enum in motion_model.h)
 motion_model: 1
@@ -49,9 +45,9 @@ sdncv:
 # parameters for the IMU mechanized motion model
 mech:
   # standard deviation parameters for linear and angular velocity
-  x:  0.20
-  y:  0.20
-  z:  0.20
-  ax: 0.1
-  ay: 0.1
-  az: 0.1
+  x:  0.0075
+  y:  0.0075
+  z:  0.0075
+  ax: 0.01
+  ay: 0.01
+  az: 0.01
