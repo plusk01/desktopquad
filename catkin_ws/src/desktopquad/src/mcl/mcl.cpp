@@ -165,8 +165,8 @@ void MCL::measurements_cb(const aruco_localization::MarkerMeasurementArrayConstP
 void MCL::imu_cb(const sensor_msgs::ImuConstPtr&  msg)
 {
     std::shared_ptr<MECH> mech_mm_ = std::static_pointer_cast<MECH>(mm_);
-    mech_mm_->acc << msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z;
-    mech_mm_->gyro << msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z;
+    mech_mm_->acc << msg->linear_acceleration.x, -msg->linear_acceleration.y, -msg->linear_acceleration.z;
+    mech_mm_->gyro << msg->angular_velocity.x, -msg->angular_velocity.y, -msg->angular_velocity.z;
 }
 
 void MCL::acc_b_cb(const geometry_msgs::Vector3StampedConstPtr&  msg)
@@ -295,7 +295,7 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   // Measurement model
   //
 
-  // Create rotation matrix from measurement to working frame
+  // Create rotation matrix from camera to world frame
   // Note: Eigen uses active rotations, so this line should technically read:
   //    p->quat.inverse().toRotationMatrix().transpose()
   Eigen::Matrix3d R_c2w = p->quat.toRotationMatrix();

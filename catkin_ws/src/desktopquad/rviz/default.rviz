@@ -6,9 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Landmarks1
-        - /PoseArray1
-        - /Pose1
       Splitter Ratio: 0.522222221
     Tree Height: 747
   - Class: rviz/Selection
@@ -145,7 +142,7 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.0700000003
       Head Radius: 0.0299999993
-      Name: PoseArray
+      Name: Particle Cloud
       Shaft Length: 0.230000004
       Shaft Radius: 0.00999999978
       Shape: Axes
@@ -160,7 +157,7 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.300000012
       Head Radius: 0.100000001
-      Name: Pose
+      Name: MCL Estimate
       Shaft Length: 1
       Shaft Radius: 0.0500000007
       Shape: Axes
@@ -191,7 +188,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.44949198
+      Distance: 1.29267526
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -206,10 +203,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.299797982
+      Pitch: 0.259797931
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.0404078178
+      Yaw: 6.16359329
     Saved: ~
 Window Geometry:
   Displays:
@@ -227,5 +224,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1200
-  X: 705
-  Y: 54
+  X: 697
+  Y: 24

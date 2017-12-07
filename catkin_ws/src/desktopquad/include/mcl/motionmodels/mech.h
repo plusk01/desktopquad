@@ -19,7 +19,7 @@ namespace mcl {
     Eigen::Vector3d gyro = Eigen::Vector3d::Zero();
     Eigen::Vector3d acc_b = Eigen::Vector3d::Zero();
     Eigen::Vector3d gyro_b = Eigen::Vector3d::Zero();
-    const Eigen::Vector3d gvec = Eigen::Vector3d(0, 0, 9.81);
+    const Eigen::Vector3d gvec = Eigen::Vector3d(0, 0, 9.80556);
     MECH(double std_x, double std_y, double std_z, double std_ax, double std_ay, double std_az)
     {
       Eigen::Vector3d mean = Eigen::Vector3d::Zero();
@@ -54,8 +54,8 @@ namespace mcl {
       Eigen::Matrix3d R_m2w = p->quat.toRotationMatrix();
       
       // angular velocity (measurement frame)
-      p->omega = Eigen::Vector3d::Zero();
-      // p->omega = gyro - gyro_b + Omega;
+      // p->omega = Eigen::Vector3d::Zero();
+      p->omega = gyro - gyro_b + Omega;
 
       // velocity (measurement frame)
       Eigen::Vector3d b_vel;

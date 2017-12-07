@@ -34,17 +34,11 @@ initial_volume:
 #   0 - stochastically-driven nearly-constant velocity
 #
 #   (defn come from `MotionModels` enum in motion_model.h)
-motion_model: 0
+motion_model: 1
 
 # parameters for the SDNCV motion model
 sdncv:
   # standard deviation parameters for linear and angular acceleration
-  # x:  0.01
-  # y:  0.01
-  # z:  0.01
-  # ax: 0.5
-  # ay: 0.5
-  # az: 0.5
   x:  15
   y:  15
   z:  15
@@ -55,9 +49,9 @@ sdncv:
 # parameters for the IMU mechanized motion model
 mech:
   # standard deviation parameters for linear and angular velocity
-  x:  1.25
-  y:  1.25
-  z:  1.25
+  x:  0.20
+  y:  0.20
+  z:  0.20
   ax: 0.1
   ay: 0.1
   az: 0.1
