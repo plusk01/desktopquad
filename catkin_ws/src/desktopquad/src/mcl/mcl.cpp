@@ -33,20 +33,20 @@ MCL::MCL() :
   // create the specified motion model
   int mm = nh_private.param<int>("motion_model", MM_MECH);
   if (mm == MM_SDNCV) {
-    double x = nh_private.param<double>("sdncv/x", 0.01);
-    double y = nh_private.param<double>("sdncv/y", 0.01);
-    double z = nh_private.param<double>("sdncv/z", 0.01);
-    double ax = nh_private.param<double>("sdncv/ax", 0.001);
-    double ay = nh_private.param<double>("sdncv/ay", 0.001);
-    double az = nh_private.param<double>("sdncv/az", 0.001);
+    double x = nh_private.param<double>("sdncv/x", 15);
+    double y = nh_private.param<double>("sdncv/y", 15);
+    double z = nh_private.param<double>("sdncv/z", 15);
+    double ax = nh_private.param<double>("sdncv/ax", 200);
+    double ay = nh_private.param<double>("sdncv/ay", 200);
+    double az = nh_private.param<double>("sdncv/az", 200);
     mm_ = std::make_shared<SDNCV>(x, y, z, ax, ay, az);
   } else if (mm == MM_MECH) {
-    double x = nh_private.param<double>("mech/x", 0.1);
-    double y = nh_private.param<double>("mech/y", 0.1);
-    double z = nh_private.param<double>("mech/z", 0.1);
-    double ax = nh_private.param<double>("mech/ax", 0.1);
-    double ay = nh_private.param<double>("mech/ay", 0.1);
-    double az = nh_private.param<double>("mech/az", 0.1);
+    double x = nh_private.param<double>("mech/x", 0.01);
+    double y = nh_private.param<double>("mech/y", 0.01);
+    double z = nh_private.param<double>("mech/z", 0.01);
+    double ax = nh_private.param<double>("mech/ax", 0.01);
+    double ay = nh_private.param<double>("mech/ay", 0.01);
+    double az = nh_private.param<double>("mech/az", 0.01);
     mm_ = std::make_shared<MECH>(x, y, z, ax, ay, az);
     imu_sub_ = nh_private.subscribe("imu/data", 1, &MCL::imu_cb, this);
     acc_b_sub_ = nh_private.subscribe("imu/acc_bias", 1, &MCL::acc_b_cb, this);
@@ -63,10 +63,16 @@ MCL::MCL() :
     ros::shutdown();
   }
 
-  // build measurement noise mvnpdf
+  // build measurement noise mvnpdf using terms from rosparam server
+  double x = nh_private.param<double>("noise_R/x", 0.1);
+  double y = nh_private.param<double>("noise_R/y", 0.1);
+  double z = nh_private.param<double>("noise_R/z", 0.1);
+  double R = nh_private.param<double>("noise_R/R", 0.1);
+  double P = nh_private.param<double>("noise_R/P", 0.1);
+  double Y = nh_private.param<double>("noise_R/Y", 0.1);
   Eigen::Matrix<double,6,1> R_var;
-  R_var << std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2), std::pow(0.1,2);
-  mvnpdf_ = std::make_shared<rv::mvnpdf>(R_var.segment(0,3).asDiagonal());
+  R_var << std::pow(x,2), std::pow(y,2), std::pow(z,2), std::pow(R,2), std::pow(P,2), std::pow(Y,2);
+  mvnpdf_ = std::make_shared<rv::mvnpdf>(R_var.segment(0,3).asDiagonal() /*only using pos in meas update*/);
 
   // Connect publishers and subscribers
   map_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("map", 1);
@@ -111,18 +117,14 @@ void MCL::tick()
     // Prediction
     mm_->sample(p, dt);
 
-    // If there are measurements to process
-    // while (landmark_measurements_.size() > 0) {
+    // If there are measurements to process, get the measurement ROS message
     for (const auto& Z : landmark_measurements_) {
-      // Get the current landmark measurements (this is an array of marker measurements)
-      // auto Z = landmark_measurements_.front();
 
       // For each of the marker measurements: How good is this particle?
       // Aggregate the likelihood of this particle having seen all of these measurements
       p->w = 0;
       for (const auto& z : Z->poses) {
         p->w += perceptual_model(z, p);
-        // break;
       }
     }
 
@@ -133,6 +135,8 @@ void MCL::tick()
 
   }
 
+  // tranform log-likelihoods back into probability space.
+  // Keep track of the sum of all weights to normalize with.
   double w_sum = 0;
   for (auto& p : particles_) {
     p->w = std::exp(p->w - w_max);
@@ -140,6 +144,7 @@ void MCL::tick()
   }
 
 
+  // If there were measurements (i.e., w_sum>0) then resample the particles
   if (w_sum > 0) {
     resample(w_sum);
     landmark_measurements_.clear();

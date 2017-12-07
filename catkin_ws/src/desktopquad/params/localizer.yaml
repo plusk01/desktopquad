@@ -1,5 +1,5 @@
 # number of particles
-M: 100
+M: 500
 
 # platform volume (i.e., states/particles outside this volume are invalid)
 platform_volume:
@@ -24,6 +24,16 @@ initial_volume:
   P: [0.00, 0.00] # -eps to eps degrees
   Y: [-1.56, -1.58]
   # Y: [-3.142, 3.142]
+
+# measurement noise
+#   diagonal standard deviation terms
+noise_R:
+  x: 0.1
+  y: 0.1
+  z: 0.1
+  R: 0.1
+  P: 0.1
+  Y: 0.1
 
 # motion model
 #   0 - stochastically-driven nearly-constant velocity
