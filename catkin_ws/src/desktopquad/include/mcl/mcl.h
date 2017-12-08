@@ -82,12 +82,18 @@ namespace mcl
     ros::Subscriber meas_sub_;
     ros::Subscriber is_flying_sub_;
     ros::Subscriber imu_sub_;
-    ros::Subscriber acc_b_sub_;
-    ros::Subscriber gyro_b_sub_;
+    ros::Subscriber acc_b_sub_;   // These IMU bias subscribers are
+    ros::Subscriber gyro_b_sub_;  // only used in non-SIL simulation
+
+    // most recent biases from the callbacks
+    Eigen::Vector3d bacc_, bgyro_;
 
     // ROS tf listener and broadcaster
     tf::TransformListener tf_listener_;
     tf::TransformBroadcaster tf_br_;
+
+    // homogeneous transform from camera to body frame (from tf tree)
+    Eigen::Isometry3d T_c2b_;
 
     // Measurement queues
     std::vector<aruco_localization::MarkerMeasurementArrayConstPtr> landmark_measurements_;

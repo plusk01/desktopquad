@@ -49,6 +49,8 @@ MCL::MCL() :
     double az = nh_private.param<double>("mech/az", 0.01);
     mm_ = std::make_shared<MECH>(x, y, z, ax, ay, az);
     imu_sub_ = nh_private.subscribe("imu/data", 1, &MCL::imu_cb, this);
+
+    // These bias topics only exist for non-SIL simulation
     acc_b_sub_ = nh_private.subscribe("imu/acc_bias", 1, &MCL::acc_b_cb, this);
     gyro_b_sub_ = nh_private.subscribe("imu/gyro_bias", 1, &MCL::gyro_b_cb, this);
   }
@@ -82,6 +84,16 @@ MCL::MCL() :
 
   // initialize the particles
   init_particles();
+
+  // Lookup the transform (from tf tree) that converts from the camera to the body frame
+  tf::StampedTransform transform;
+  try {
+    tf_listener_.waitForTransform("body", "camera", ros::Time(0), ros::Duration(10.0) );
+    tf_listener_.lookupTransform("body", "camera", ros::Time(0), transform);
+  } catch (tf::TransformException ex) {
+    ROS_ERROR("%s",ex.what());
+  }
+  tf::transformTFToEigen(transform, T_c2b_);
 }
 
 // ----------------------------------------------------------------------------
@@ -110,8 +122,6 @@ void MCL::tick()
 
   // store the sum of all probability weights to normalize with
   double w_max = std::numeric_limits<double>::lowest();
-
-  // std::cout << "\n\n**** New Tick ****\n\n";
 
   for (auto& p : particles_) {
     // Prediction
@@ -167,25 +177,41 @@ void MCL::measurements_cb(const aruco_localization::MarkerMeasurementArrayConstP
   landmark_measurements_.push_back(msg);
 }
 
+// ----------------------------------------------------------------------------
+
 void MCL::imu_cb(const sensor_msgs::ImuConstPtr&  msg)
 {
   // IMU data comes in as NED, but since we are doing everything in the camera frame,
   // we need to account for that here by negating: (x, -y, -z)
-  std::shared_ptr<MECH> mech_mm_ = std::static_pointer_cast<MECH>(mm_);
-  mech_mm_->acc << msg->linear_acceleration.x, -msg->linear_acceleration.y, -msg->linear_acceleration.z;
-  mech_mm_->gyro << msg->angular_velocity.x, -msg->angular_velocity.y, -msg->angular_velocity.z;
+  
+  // Convert to Eigen vectors so we can do math
+  Eigen::Vector3d acc, gyro, bacc, bgyro;
+  tf::vectorMsgToEigen(msg->linear_acceleration, acc);
+  tf::vectorMsgToEigen(msg->angular_velocity, gyro);
+
+  // Rotate from the body (NED) to the camera frame
+  acc = T_c2b_.rotation()*acc;
+  gyro = T_c2b_.rotation()*gyro;
+  bacc = T_c2b_.rotation()*bacc_;
+  bgyro = T_c2b_.rotation()*bgyro_;
+
+  std::shared_ptr<MECH> mech_mm = std::static_pointer_cast<MECH>(mm_);
+  mech_mm->set_imu(acc, gyro);
+  mech_mm->set_biases(bacc, bgyro);
 }
+
+// ----------------------------------------------------------------------------
 
 void MCL::acc_b_cb(const geometry_msgs::Vector3StampedConstPtr&  msg)
 {
-  std::shared_ptr<MECH> mech_mm_ = std::static_pointer_cast<MECH>(mm_);
-  mech_mm_->acc_b << msg->vector.x, -msg->vector.y, -msg->vector.z;
+  tf::vectorMsgToEigen(msg->vector, bacc_);
 }
+
+// ----------------------------------------------------------------------------
 
 void MCL::gyro_b_cb(const geometry_msgs::Vector3StampedConstPtr&  msg)
 {
-  std::shared_ptr<MECH> mech_mm_ = std::static_pointer_cast<MECH>(mm_);
-  mech_mm_->gyro_b << msg->vector.x, -msg->vector.y, -msg->vector.z;
+  tf::vectorMsgToEigen(msg->vector, bgyro_);
 }
 
 // ----------------------------------------------------------------------------
@@ -256,7 +282,7 @@ void MCL::init_particles()
         // position (in working frame)
         xDis(gen), yDis(gen), zDis(gen),
         // 0, 0, 0,
-        // orientation (from working to measurement frame)
+        // orientation (from working to camera frame)
         RDis(gen),PDis(gen),YDis(gen)
         // 0, 0, 0
       ));
@@ -302,7 +328,7 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   // Measurement model
   //
 
-  // Create rotation matrix from camera to world frame
+  // Create rotation matrix from camera to working frame
   // Note: Eigen uses active rotations, so this line should technically read:
   //    p->quat.inverse().toRotationMatrix().transpose()
   Eigen::Matrix3d R_c2w = p->quat.toRotationMatrix();
@@ -336,7 +362,6 @@ double MCL::perceptual_model(const aruco_localization::MarkerMeasurement& z, Par
   rvec(5) = wrapAngle(rvec(5));
 
   Eigen::Vector3d rvec_small = rvec.segment(0,3);
-  // return logmvnpdf(rvec_small, Eigen::Vector3d::Zero(), R_var_small.asDiagonal());
 
   return mvnpdf_->logprob(rvec_small, Eigen::Vector3d::Zero());
 }
@@ -368,11 +393,6 @@ void MCL::resample(double w_sum)
   int i = 0;
   double c = (particles_[0]->w/w_sum);
 
-  // for (int m=0; m<M; m++) std::cout << particles_[m]->w << "   ";
-  // std::cout << std::endl;
-  // for (int m=0; m<M; m++) std::cout << particles_[m]->w/w_sum << "   ";
-  // std::cout << std::endl;
-
   std::vector<ParticlePtr> particles;
   for (int m=0; m<M; m++) {
 
@@ -385,13 +405,9 @@ void MCL::resample(double w_sum)
       c += (particles_[i]->w/w_sum);
     }
 
-    // std::cout << "[" << m << " : " << U << " : " << c << " : " << i << "] Selecting particle " << i << std::endl;
-
     // Add a copy of the ith particle to the new set
     particles.push_back(std::make_shared<Particle>(*particles_[i]));
   }
-
-  // std::cout << std::endl << std::endl;
 
   // Keep the newly resampled particles
   particles_.swap(particles);

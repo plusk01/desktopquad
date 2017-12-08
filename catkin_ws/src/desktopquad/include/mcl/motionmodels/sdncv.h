@@ -35,10 +35,10 @@ namespace mcl {
       Eigen::Vector3d V     = accel_->samples(1)*dt;
       Eigen::Vector3d Omega = alpha_->samples(1)*dt;
 
-      // velocity (measurement frame)
+      // velocity (camera frame)
       p->vel = V;
 
-      // angular velocity (measurement frame)
+      // angular velocity (camera frame)
       p->omega = Omega;
 
       // position (working frame)
@@ -46,7 +46,7 @@ namespace mcl {
       //    p->quat.inverse().toRotationMatrix().transpose() * p->vel*dt
       p->pos += p->quat.toRotationMatrix() * p->vel*dt;
 
-      // orientation (working to measurement frame)
+      // orientation (working to camera frame)
       Eigen::Quaterniond qdot =  p->quat * Eigen::Quaterniond(0, p->omega(0)*dt, p->omega(1)*dt, p->omega(2)*dt);
       p->quat.w() += 0.5*qdot.w();
       p->quat.x() += 0.5*qdot.x();
