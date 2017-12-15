@@ -91,7 +91,7 @@ namespace mcl {
     const Eigen::Vector3d gvec_ = Eigen::Vector3d(0, 0, 9.81);
 
     // Allowable margin (percentage) on accelerometer values +/- expected (gvec_)
-    double acc_margin_ = 0.20;
+    double acc_margin_ = 0.60;
 
     // Updated by the caller
     Eigen::Vector3d acc_ = Eigen::Vector3d::Zero();

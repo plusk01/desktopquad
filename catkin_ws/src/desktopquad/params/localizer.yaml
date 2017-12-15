@@ -3,6 +3,7 @@ M: 500
 
 # platform volume (i.e., states/particles outside this volume are invalid)
 platform_volume:
+  # specified in the body frame (NED) w.r.t the platform_NED frame
   x: [-0.150, 0.150] # platform width
   y: [-0.175, 0.175] # platform length
   z: [ 0.000, 0.390] # rod length (height)
@@ -15,6 +16,7 @@ platform_volume:
 # particles do not need a large range since we assume that MCL starts when the
 # quadrotor is not flying and is level on the base of the platform.
 initial_volume:
+  # specified in the body frame (NED) w.r.t the platform_NED frame
   x: [-0.050, 0.050]
   y: [-0.050, 0.050]
   z: [ 0.370, 0.390]
@@ -55,9 +57,9 @@ sdncv:
 # parameters for the IMU mechanized motion model
 mech:
   # standard deviation parameters for linear and angular velocity
-  x:  0.0075
-  y:  0.0075
-  z:  0.0075
+  x:  0.0025
+  y:  0.0025
+  z:  0.0025
   ax: 0.01
   ay: 0.01
   az: 0.01

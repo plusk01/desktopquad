@@ -189,11 +189,15 @@ void MCL::imu_cb(const sensor_msgs::ImuConstPtr&  msg)
   tf::vectorMsgToEigen(msg->linear_acceleration, acc);
   tf::vectorMsgToEigen(msg->angular_velocity, gyro);
 
+  // Rotation from camera to body frame -- note that the transpose
+  // is taken because Eigen does active rotations.
+  Eigen::Matrix3d R_c2b = T_c2b_.rotation().transpose();
+
   // Rotate from the body (NED) to the camera frame
-  acc = T_c2b_.rotation()*acc;
-  gyro = T_c2b_.rotation()*gyro;
-  bacc = T_c2b_.rotation()*bacc_;
-  bgyro = T_c2b_.rotation()*bgyro_;
+  acc = R_c2b*acc;
+  gyro = R_c2b*gyro;
+  bacc = R_c2b*bacc_;
+  bgyro = R_c2b*bgyro_;
 
   std::shared_ptr<MECH> mech_mm = std::static_pointer_cast<MECH>(mm_);
   mech_mm->set_imu(acc, gyro);
@@ -281,10 +285,8 @@ void MCL::init_particles()
     particles_.emplace_back(std::make_shared<Particle>(
         // position (in working frame)
         xDis(gen), yDis(gen), zDis(gen),
-        // 0, 0, 0,
         // orientation (from working to camera frame)
         RDis(gen),PDis(gen),YDis(gen)
-        // 0, 0, 0
       ));
   }
 
