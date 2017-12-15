@@ -11,7 +11,7 @@
 
     <node pkg="desktopquad" type="mcl" name="mcl" output="screen">
       <remap from="mcl/measurements" to="aruco/measurements" />
-      <remap from="mcl/imu/data" to="imu/data" />
+      <remap from="mcl/imu/data" to="/imu/data" />
       <remap from="mcl/imu/acc_bias" to="imu/acc_bias" />
       <remap from="mcl/imu/gyro_bias" to="imu/gyro_bias" />
     </node>
