@@ -22,9 +22,9 @@ initial_volume:
   z: [ 0.370, 0.390]
   # R: [-0.08726, 0.08726] # -5 to 5 degrees
   # P: [-0.08726, 0.08726] # -5 to 5 degrees
-  R: [3.142, 3.142] # -eps to eps degrees
+  R: [3.14159, 3.14159] # -eps to eps degrees
   P: [0.00, 0.00] # -eps to eps degrees
-  Y: [-1.56, -1.58]
+  Y: [-1.57, -1.57]
   # Y: [-3.142, 3.142]
 
 # measurement noise
@@ -57,9 +57,9 @@ sdncv:
 # parameters for the IMU mechanized motion model
 mech:
   # standard deviation parameters for linear and angular velocity
-  x:  0.0025
-  y:  0.0025
-  z:  0.0025
-  ax: 0.01
-  ay: 0.01
-  az: 0.01
+  x:  0.25
+  y:  0.25
+  z:  1.25
+  ax: 0.1
+  ay: 0.1
+  az: 0.1

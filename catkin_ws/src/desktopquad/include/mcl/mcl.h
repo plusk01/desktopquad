@@ -79,6 +79,7 @@ namespace mcl
     ros::Publisher map_pub_;
     ros::Publisher particles_pub_;
     ros::Publisher estimate_pub_;
+    ros::Publisher ori_pub_;
     ros::Subscriber meas_sub_;
     ros::Subscriber is_flying_sub_;
     ros::Subscriber imu_sub_;

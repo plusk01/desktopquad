@@ -80,6 +80,7 @@ MCL::MCL() :
   map_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("map", 1);
   particles_pub_ = nh_private.advertise<geometry_msgs::PoseArray>("particles", 1);
   estimate_pub_ = nh_private.advertise<geometry_msgs::PoseStamped>("estimate", 1);
+  ori_pub_ = nh_private.advertise<geometry_msgs::PoseStamped>("orientation", 1);
   meas_sub_ = nh_private.subscribe("measurements", 1, &MCL::measurements_cb, this);
 
   // initialize the particles
@@ -191,13 +192,20 @@ void MCL::imu_cb(const sensor_msgs::ImuConstPtr&  msg)
 
   // Rotation from camera to body frame -- note that the transpose
   // is taken because Eigen does active rotations.
-  Eigen::Matrix3d R_c2b = T_c2b_.rotation().transpose();
+  Eigen::Matrix3d R_b2c = T_c2b_.rotation().transpose();
 
-  // Rotate from the body (NED) to the camera frame
-  acc = R_c2b*acc;
-  gyro = R_c2b*gyro;
-  bacc = R_c2b*bacc_;
-  bgyro = R_c2b*bgyro_;
+  // Build quaternion from RPY (3-2-1)
+  double Y = (true) ? 3.14159 : 0;
+  Eigen::Quaterniond q = Eigen::AngleAxisd(Y, Eigen::Vector3d::UnitZ())
+              * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY())
+              * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX());
+  Eigen::Matrix3d R_imu2b = q.toRotationMatrix().transpose();
+
+  // Rotate from the IMU to the body (NED) to the camera frame
+  acc = R_b2c*R_imu2b*acc;
+  gyro = R_b2c*R_imu2b*gyro;
+  bacc = R_b2c*R_imu2b*bacc_;
+  bgyro = R_b2c*R_imu2b*bgyro_;
 
   std::shared_ptr<MECH> mech_mm = std::static_pointer_cast<MECH>(mm_);
   mech_mm->set_imu(acc, gyro);
@@ -485,6 +493,11 @@ void MCL::publish_particles()
   estimate.pose.position.z = avgPos(2);
   tf::quaternionEigenToMsg(avgOri, estimate.pose.orientation);
   estimate_pub_.publish(estimate);
+
+  estimate.pose.position.x = 0.75;
+  estimate.pose.position.y = 0.75;
+  estimate.pose.position.z = 0.0;
+  ori_pub_.publish(estimate);
 }
 
 }

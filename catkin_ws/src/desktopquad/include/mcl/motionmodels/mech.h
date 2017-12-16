@@ -56,7 +56,21 @@ namespace mcl {
       // acceleration due to the force of gravity in the body frame
       Eigen::Vector3d ag = R_c2w.transpose() * gvec_;
 
-      p->vel += (acc_ - acc_b_ + b_vel + ag)*dt + V;
+      Eigen::Vector3d a = Eigen::Vector3d::Zero();
+      a(2) = acc_(2) - acc_b_(2);
+      // a = acc_ - acc_b_;
+
+      // linear velocity (camera frame)
+      p->vel += (a + b_vel + ag)*dt + V;
+
+      // if (a.norm() < 7) {
+      //   std::cout << "a: " << a.transpose() << std::endl;
+      //   Eigen::Vector3d gains = Eigen::Vector3d(0.0,0.0,0.25);
+      //   p->vel += gains.asDiagonal()*p->vel;
+      // } else {
+        Eigen::Vector3d gains = Eigen::Vector3d(0.2,0.2,0.075);
+        p->vel -= gains.asDiagonal()*p->vel;
+      // }
 
       // position (working frame)
       p->pos += R_c2w * p->vel*dt;
@@ -101,4 +115,3 @@ namespace mcl {
   };
 
 }
-
