@@ -52,7 +52,7 @@ void TFFrames::tick()
     // Link map to the ArUco Marker Map
     //
 
-    // Publish the transform to get from the platform_NED (parent) frame to the map (child) frame
+    // Publish the transform to get from the map (parent) frame to the aruco (child) frame
     transform.setIdentity();
     // transform.setOrigin(tf::Vector3(0, 0, 0));
     tf::Quaternion qmap2aruco; qmap2aruco.setRPY(0.0, 0.0, M_PI/2);

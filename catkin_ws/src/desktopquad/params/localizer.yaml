@@ -57,9 +57,9 @@ sdncv:
 # parameters for the IMU mechanized motion model
 mech:
   # standard deviation parameters for linear and angular velocity
-  x:  0.25
-  y:  0.25
-  z:  1.25
+  x:  0.05
+  y:  0.05
+  z:  0.05
   ax: 0.1
   ay: 0.1
   az: 0.1

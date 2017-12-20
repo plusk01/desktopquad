@@ -57,6 +57,9 @@
     <!-- Add tf frames for this physical setup -->
     <node pkg="desktopquad" type="tf_frames" name="tf_frames" />
 
+    <!-- Link Body to IMU -->
+    <node pkg="tf" type="static_transform_publisher" name="static_tf0" args="0 0 0 0 0 0 body imu 10" />
+
     <!-- ArUco Localization -->
     <node name="aruco" pkg="aruco_localization" type="aruco_localization" output="screen">
       <param name="show_output_video" value="true" />
@@ -76,6 +79,9 @@
       <remap from="waypoint" to="high_level_command"/>
       <remap from="state" to="ground_truth/odometry/NED"/>
     </node> -->
+
+    <node name="plotter" pkg="desktopquad_sim" type="state_plotter.py" output="screen">
+    </node>
 
     <node name="vimfly" pkg="roscopter_utils" type="vimfly">
       <remap from="autopilot_command" to="high_level_command" />

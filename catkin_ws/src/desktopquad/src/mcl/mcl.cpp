@@ -86,15 +86,15 @@ MCL::MCL() :
   // initialize the particles
   init_particles();
 
-  // Lookup the transform (from tf tree) that converts from the camera to the body frame
+  // Lookup the transform (from tf tree) that converts from the camera to the IMU frame
   tf::StampedTransform transform;
   try {
-    tf_listener_.waitForTransform("body", "camera", ros::Time(0), ros::Duration(10.0) );
-    tf_listener_.lookupTransform("body", "camera", ros::Time(0), transform);
+    tf_listener_.waitForTransform("imu", "camera", ros::Time(0), ros::Duration(10.0) );
+    tf_listener_.lookupTransform("imu", "camera", ros::Time(0), transform);
   } catch (tf::TransformException ex) {
     ROS_ERROR("%s",ex.what());
   }
-  tf::transformTFToEigen(transform, T_c2b_);
+  tf::transformTFToEigen(transform, T_c2imu_);
 }
 
 // ----------------------------------------------------------------------------
@@ -190,22 +190,15 @@ void MCL::imu_cb(const sensor_msgs::ImuConstPtr&  msg)
   tf::vectorMsgToEigen(msg->linear_acceleration, acc);
   tf::vectorMsgToEigen(msg->angular_velocity, gyro);
 
-  // Rotation from camera to body frame -- note that the transpose
+  // Rotation from IMU to camera frame -- note that no transpose
   // is taken because Eigen does active rotations.
-  Eigen::Matrix3d R_b2c = T_c2b_.rotation().transpose();
-
-  // Build quaternion from RPY (3-2-1)
-  double Y = (true) ? 3.14159 : 0;
-  Eigen::Quaterniond q = Eigen::AngleAxisd(Y, Eigen::Vector3d::UnitZ())
-              * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY())
-              * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX());
-  Eigen::Matrix3d R_imu2b = q.toRotationMatrix().transpose();
+  Eigen::Matrix3d R_imu2c = T_c2imu_.rotation();
 
   // Rotate from the IMU to the body (NED) to the camera frame
-  acc = R_b2c*R_imu2b*acc;
-  gyro = R_b2c*R_imu2b*gyro;
-  bacc = R_b2c*R_imu2b*bacc_;
-  bgyro = R_b2c*R_imu2b*bgyro_;
+  acc = R_imu2c*acc;
+  gyro = R_imu2c*gyro;
+  bacc = R_imu2c*bacc_;
+  bgyro = R_imu2c*bgyro_;
 
   std::shared_ptr<MECH> mech_mm = std::static_pointer_cast<MECH>(mm_);
   mech_mm->set_imu(acc, gyro);

@@ -68,7 +68,7 @@ namespace mcl {
       //   Eigen::Vector3d gains = Eigen::Vector3d(0.0,0.0,0.25);
       //   p->vel += gains.asDiagonal()*p->vel;
       // } else {
-        Eigen::Vector3d gains = Eigen::Vector3d(0.2,0.2,0.075);
+        Eigen::Vector3d gains = Eigen::Vector3d(0.2,0.2,0.2);
         p->vel -= gains.asDiagonal()*p->vel;
       // }
 

@@ -93,8 +93,8 @@ namespace mcl
     tf::TransformListener tf_listener_;
     tf::TransformBroadcaster tf_br_;
 
-    // homogeneous transform from camera to body frame (from tf tree)
-    Eigen::Isometry3d T_c2b_;
+    // homogeneous transform from camera to IMU frame (from tf tree)
+    Eigen::Isometry3d T_c2imu_;
 
     // Measurement queues
     std::vector<aruco_localization::MarkerMeasurementArrayConstPtr> landmark_measurements_;
