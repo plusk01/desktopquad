@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="record" default="false" />
+  <arg name="bagname" default="desktopquad.bag" />
+
+  <group if="$(arg record)">
+    <node name="recorder" pkg="rosbag" type="record"
+          args="-O $(env PWD)/$(arg bagname) 
+                -e  '/chiny/(mcl|aruco)/(.*)'
+                    '/chiny/ground_truth/(.*)'
+                    '/chiny/imu/(.*)'
+                    /chiny/camera/rgb/compressed
+                    /chiny/cameraamera_info
+                    /chiny/attitude
+                    /chiny/command
+                    /chiny/high_level_command
+                    /chiny/is_flying
+                    /tf /rosout /clock" />
+  </group>
+
+</launch>

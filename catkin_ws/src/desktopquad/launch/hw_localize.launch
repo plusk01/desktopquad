@@ -2,6 +2,14 @@
 <launch>
   <arg name="mav_name"            default="chiny"/>
 
+  <!-- rosbag recorder: add record:=true to record relevant topics -->
+  <arg name="record" default="false" />
+  <arg name="bagname" default="desktopquad_hw.bag" />
+  <include file="$(find desktopquad)/launch/recorder.launch">
+    <arg name="record" value="$(arg record)" />
+    <arg name="bagname" value="$(arg bagname)" />
+  </include>
+
   <group ns="$(arg mav_name)">
 
     <!-- Load common parameters -->

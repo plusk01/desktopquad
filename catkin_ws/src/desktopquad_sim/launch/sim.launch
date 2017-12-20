@@ -2,7 +2,6 @@
 <launch>
   <arg name="mav_name"            default="chiny"/>
 
-  <!-- <group if="0"> -->
   <!-- Start Gazebo -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="paused"      value="true"/>
@@ -30,7 +29,14 @@
     <arg name="z"           value="1.020"/>
     <arg name="yaw"         value="0"/>
   </include>
-<!-- </group> -->
+
+  <!-- rosbag recorder: add record:=true to record relevant topics -->
+  <arg name="record" default="false" />
+  <arg name="bagname" default="desktopquad_sim.bag" />
+  <include file="$(find desktopquad)/launch/recorder.launch">
+    <arg name="record" value="$(arg record)" />
+    <arg name="bagname" value="$(arg bagname)" />
+  </include>
   
   <group ns="$(arg mav_name)">
 
