@@ -7,6 +7,6 @@ The DesktopQuad project aims to put a multirotor on every table. The platform co
 
 The DesktopQuad connects to a desktop computer, where all the high level processing is done. As shown in the system architecture diagram below, the onboard sensors are processed on the computer to provide state estimation and position control. Attitude control and stabilization is done onboard the flight controller in ROSflight.
 
-<div>
+<p align="center">
     <img src="https://raw.githubusercontent.com/wiki/plusk01/desktopquad/figures/sysarch.png" width="65%" />
-</div>
+</p>
