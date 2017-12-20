@@ -15,3 +15,9 @@ The DesktopQuad connects to a desktop computer, where all the high level process
 <p align="center">
     <img src="https://raw.githubusercontent.com/wiki/plusk01/desktopquad/figures/sysarch.png" width="65%" />
 </p>
+
+## See it in Action ##
+
+- [Maiden flight (RC)](https://www.youtube.com/watch?v=8vroYsu1chs&index=5&list=PLQc_kHscNTeguc7sT1ASR-9vpAyASg_8j)
+- [Particle filter sim results](https://www.youtube.com/watch?v=7iTq9rV5ex4&index=1&t=4s&list=PLQc_kHscNTeguc7sT1ASR-9vpAyASg_8j)
+- [Particle filter hardware results](https://www.youtube.com/watch?v=tHIVad2cPMA&index=2&list=PLQc_kHscNTeguc7sT1ASR-9vpAyASg_8j)
